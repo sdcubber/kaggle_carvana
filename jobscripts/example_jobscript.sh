@@ -7,7 +7,7 @@ cd ../src
 source activate pytorch
 
 # run python script
-python script.py --options 
+python saskldfjaksjdfklasdjfklasjdflkas
 
 cd ../shscripts
 

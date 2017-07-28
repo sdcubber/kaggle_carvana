@@ -34,7 +34,9 @@ git workflow (to push to master):
 2. Do work
 3. ```git status``` to see which files have changed
 4. ```git add ./filesthatyouhavechanged```
-5. ```git commit -m message```
+5. ```git commit -m message``` **Provide a meaningful message**
 5. ```git push```
+
+See [here](https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control) to learn more
 
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>

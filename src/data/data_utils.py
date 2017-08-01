@@ -13,7 +13,6 @@ class CarvanaDataset(Dataset):
         Args:
         im_dir (string): Directory with all the images.
         mask_dir (string): Directory with the masks. None for test data. 
-        debug_mode (bool): Use only first 100 images in the directory.
         """
     
         self.im_dir = im_dir # directory

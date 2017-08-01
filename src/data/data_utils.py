@@ -25,6 +25,7 @@ class CarvanaDataset(Dataset):
         """
 
         self.im_dir = im_dir # directory
+        self.mask_dir = mask_dir
         self.im_list = os.listdir(self.im_dir) # list with image names
         if debug:
             self.im_list = self.im_list[:100]

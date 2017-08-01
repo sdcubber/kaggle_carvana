@@ -33,8 +33,7 @@ class CarvanaDataset(Dataset):
         self.common_transforms = common_transforms
         self.input_transforms = input_transforms
 
-        if mask_dir:
-            self.mask_dir = mask_dir
+        if self.mask_dir:
             self.mask_list = os.listdir(self.mask_dir)
             # list with id's to match them with training images
             self.maskid_list = [name.split('.')[0].split('_mask')[0] for name in self.mask_list]
@@ -61,5 +60,9 @@ class CarvanaDataset(Dataset):
             image=self.common_transforms(image)
             mask=self.common_transforms(mask)
 
-        sample={'image':image, 'mask':mask}
+        if self.mask_dir:
+            sample={'image':image, 'mask':mask, 'id': im_id}
+        else:
+            sample={'image':image, 'id': im_id}
+
         return(sample)

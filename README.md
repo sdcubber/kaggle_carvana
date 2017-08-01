@@ -16,8 +16,9 @@ Project Organization
 - models: store model weights and architectures here
 - predictions: prediction files for train and test data
 - jobscripts: put jobscripts to run on GPU machine. See example jobscript.
+- notebooks: for jupyter notebooks. This folder is not ignored by github. 
 
-***! Note that the folder /data/ is ignored by github. If you add additional data to this folder locally, you will have to do the same on the GPU machine. The same is true for /notebooks/.***
+***! Note that the folder /data/ is ignored by github. If you add additional data to this folder locally, you will have to do the same on the GPU machine. ***
 
 
 'Submit jobs' to the GPU

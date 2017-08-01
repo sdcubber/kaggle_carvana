@@ -11,7 +11,7 @@ class CarvanaDataset(Dataset):
     def __init__(self, im_dir, mask_dir=None, transform=None):
         """
         Args:
-        root_dir (string): Directory with all the images.
+        im_dir (string): Directory with all the images.
         mask_dir (string): Directory with the masks. None for test data. 
         debug_mode (bool): Use only first 100 images in the directory.
         """

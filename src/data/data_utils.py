@@ -9,7 +9,7 @@ from PIL import Image
 class CarvanaDataset(Dataset):
     """Kaggle Carvana dataset."""
 
-    def __init__(self, im_dir, mask_dir=None, transform=None, debug_mode=False):
+    def __init__(self, im_dir, mask_dir=None, transform=None, debug=False):
         """
         Args:
         im_dir (string): Directory with all the images.
@@ -20,7 +20,7 @@ class CarvanaDataset(Dataset):
 
         self.im_dir = im_dir # directory
         self.im_list = os.listdir(self.im_dir) # list with image names
-        if debug_mode:
+        if debug:
             self.im_list = self.im_list[:100]
         self.transform = transform
 

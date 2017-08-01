@@ -6,15 +6,21 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import ToTensor
 from PIL import Image
 
+pil_to_tensor = ToTensor()
+
 class CarvanaDataset(Dataset):
     """Kaggle Carvana dataset."""
 
-    def __init__(self, im_dir, mask_dir=None, transform=None, debug=False):
+    def __init__(self, im_dir, mask_dir=None,
+     common_transforms=None,
+     input_transforms=None,
+     debug=False):
         """
         Args:
         im_dir (string): Directory with all the images.
         mask_dir (string): Directory with the masks. None for test data.
-        transform: transforms to be applied on input images
+        common_transforms: transforms on input and output images
+        input_transforms: transforms only on input images
         debug (boolean): In debug mode, use only 100 images
         """
 
@@ -22,7 +28,9 @@ class CarvanaDataset(Dataset):
         self.im_list = os.listdir(self.im_dir) # list with image names
         if debug:
             self.im_list = self.im_list[:100]
-        self.transform = transform
+
+        self.common_transforms = common_transforms
+        self.input_transforms = input_transforms
 
         if mask_dir:
             self.mask_dir = mask_dir
@@ -45,13 +53,12 @@ class CarvanaDataset(Dataset):
             mask_name = os.path.join(self.mask_dir, self.mask_list[mask_loc])
             mask = Image.open(mask_name)
 
-        if self.transform:
-       	    image=self.transform(image)
+        if self.input_transforms:
+       	    image=self.input_transforms(image)
 
-        # Finally, convert to torch tensors
-        pil_to_tensor = ToTensor()
-        image = pil_to_tensor(image)
-        mask = pil_to_tensor(mask)
+        if self.common_transforms:
+            image=self.common_transforms(image)
+            mask=self.common_transforms(mask)
 
         sample={'image':image, 'mask':mask}
         return(sample)

@@ -14,6 +14,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 
 # import custom python modules
+from data.config import *
 import data.data_utils as du
 import models.model_utils as mu
 import processing.processing_utils as pu
@@ -69,24 +70,37 @@ def run_script(name, epochs, batch_size, debug):
             if i % 1 == 0:
                 loss_history.append(loss.data.numpy()[0])
 
+    print('Making predictions for test data...')
+
     test_idx = []
     rle_encoded_predictions = []
 
-    print('Making predictions for test data...')
     for i, im in enumerate(tqdm(test_loader)):
         images = Variable(im['image'])
         masks_test = net.eval()(images)
 
-        # rle encode the predictions (this is ugly code...)
-        rle_encoded_predictions.append([pu.rle(masks_test.data.numpy().squeeze()[b,:,:])[2] for b in np.arange(images.size(0))])
+        # Go from pytorch tensor to list of PIL images, which can be rescaled and interpolated
+        PIL_list = [transforms.ToPILImage()(masks_test.data[b]) for b in range(masks_test.size()[0])]
+
+        # Rescale them to np matrices with the correct size
+        np_list = [pu.upscale_test_img(img) for img in PIL_list]
+
+        # rle encode the predictions
+        rle_encoded_predictions.append([pu.rle(im)[2] for im in np_list])
         test_idx.append(im['id'])
+
 
     # Prepare submission file
     test_idx_all = [j+'.jpg' for batch in test_idx for j in batch]
     rle_encoded_predictions_all = [j for batch in rle_encoded_predictions for j in batch]
+    predictions_mapping = dict(zip(test_idx_all, rle_encoded_predictions_all))
 
-    sub = pd.DataFrame({'img': test_idx_all, 'rle_mask': rle_encoded_predictions_all})
-    sub.to_csv('../predictions/test/{}.csv'.format(name), index=False)
+    # Map predictions to the sample submission file to make sure we make no errors with the ordering of files
+    submission_file = pd.read_csv(SAMPLE_SUB_CSV)
+    submission_file['rle_mask'] = submission_file['img']
+    submission_file['rle_mask'] = submission_file['rle_mask'].map(predictions_mapping)
+
+    print('Done!')
 
 
 def main():

@@ -1,68 +1,52 @@
-# Script with utility code for data
-
-import torch
 import os
-from torch.utils.data import Dataset, DataLoader
-from torchvision.transforms import ToTensor
+from torch.utils.data import Dataset
 from PIL import Image
-
-pil_to_tensor = ToTensor()
+from data.config import*
 
 class CarvanaDataset(Dataset):
     """Kaggle Carvana dataset."""
 
-    def __init__(self, im_dir, mask_dir=None,
-     common_transforms=None,
-     input_transforms=None,
-     debug=False):
+    def __init__(self, im_dir, mask_dir=None, common_transforms=None, input_transforms=None, rotation_ids=range(1,17), debug=False):
         """
         Args:
         im_dir (string): Directory with all the images.
         mask_dir (string): Directory with the masks. None for test data.
         common_transforms: transforms on input and output images
         input_transforms: transforms only on input images
+        rotation_ids (list [1-16]): containing types of rotations that we are interested
         debug (boolean): In debug mode, use only 100 images
         """
 
         self.im_dir = im_dir # directory
         self.mask_dir = mask_dir
-        self.im_list = os.listdir(self.im_dir) # list with image names
+        self.im_list = [name.split('.')[0] for name in os.listdir(im_dir)]
+
+        # get all files with specific rotations in rotation_ids
+        rotation_ids = np.char.mod('_%02d', rotation_ids)
+        self.im_list = [item for item in self.im_list if any(rot_id in item for rot_id in rotation_ids)]
+
         if debug:
             self.im_list = self.im_list[:64]
 
         self.common_transforms = common_transforms
         self.input_transforms = input_transforms
 
-        if self.mask_dir:
-            self.mask_list = os.listdir(self.mask_dir)
-            # list with id's to match them with training images
-            self.maskid_list = [name.split('.')[0].split('_mask')[0] for name in self.mask_list]
-
     def __len__(self):
-        return(len(self.im_list))
+        return len(self.im_list)
 
     def __getitem__(self, idx):
-        im_name = os.path.join(self.im_dir, self.im_list[idx])
-        im_id = self.im_list[idx].split('.')[0]
-
-        image = Image.open(im_name)
+        im_name = self.im_list[idx]
+        image = Image.open(join_path(self.im_dir, im_name + '.jpg'))
         mask = None
 
         if self.mask_dir:
-            mask_loc = self.maskid_list.index(im_id)
-            mask_name = os.path.join(self.mask_dir, self.mask_list[mask_loc])
-            mask = Image.open(mask_name)
+            mask = Image.open(join_path(self.mask_dir, im_name + '_mask.gif'))
 
         if self.input_transforms:
-       	    image=self.input_transforms(image)
+            image=self.input_transforms(image)
 
         if self.common_transforms:
             image=self.common_transforms(image)
             mask=self.common_transforms(mask)
 
-        if self.mask_dir:
-            sample={'image':image, 'mask':mask, 'id': im_id}
-        else:
-            sample={'image':image, 'id': im_id}
-
-        return(sample)
+        return {'image':image, 'mask':mask, 'id': im_name}

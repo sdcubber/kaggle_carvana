@@ -76,7 +76,7 @@ def run_script(name, epochs, batch_size, debug):
             optimizer.step() # do update step
 
             if i % 1 == 0:
-                loss_history.append(loss.data.numpy()[0])
+                loss_history.append(loss.data.cpu().numpy()[0])
 
     print('Making predictions for test data...')
 
@@ -84,7 +84,11 @@ def run_script(name, epochs, batch_size, debug):
     rle_encoded_predictions = []
 
     for i, im in enumerate(tqdm(test_loader)):
-        images = Variable(im['image'])
+        if GPU_AVAIL:
+            images = Variable(im['image'].cuda())
+        else:
+            images = images = Variable(im['image'])
+
         masks_test = net.eval()(images)
 
         # Go from pytorch tensor to list of PIL images, which can be rescaled and interpolated

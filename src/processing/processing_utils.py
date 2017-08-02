@@ -6,7 +6,9 @@ from PIL import Image
 def upscale_test_img(pil_img):
     """Upscale PIL Image to the shape of the test images.
     Args
-    pil_img: PIL Image"""
+    pil_img: PIL Image
+
+    Return np array of shape (1280,1910)"""
 
     # Go to square of size (1280,1280) with bilinear interpolation
     im = pil_img.resize((1280,1280), resample=Image.BILINEAR)
@@ -20,7 +22,7 @@ def upscale_test_img(pil_img):
 
     return(im)
 
-    
+
 
 def rle(img, threshold=0.5):
     """Fast run-lenght encoding of an image.

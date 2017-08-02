@@ -100,6 +100,7 @@ def run_script(name, epochs, batch_size, debug):
     submission_file['rle_mask'] = submission_file['img']
     submission_file['rle_mask'] = submission_file['rle_mask'].map(predictions_mapping)
 
+    submission_file.to_csv('../predictions/test/{}.csv'.format(name), index=False)
     print('Done!')
 
 

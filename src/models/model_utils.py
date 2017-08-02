@@ -32,6 +32,3 @@ class DiceLoss(nn.Module):
         score = 2. * (intersection.sum(1)+1) / (m1.sum(1) + m2.sum(1)+1)
         score = 1- score.sum()/num
         return score
-
-
-# --- CNN building blocks --- #

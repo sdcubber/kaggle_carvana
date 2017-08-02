@@ -32,74 +32,68 @@ def make_conv_bn_relu(in_channels, out_channels, kernel_size=3, stride=1, paddin
 
 class UNet128 (nn.Module):
 
-    def __init__(self, in_shape, num_classes):
+    def __init__(self):
         super(UNet128, self).__init__()
-        in_channels, height, width = in_shape
 
         #128
-
         self.down1 = nn.Sequential(
-            *make_conv_bn_relu(in_channels, 16, kernel_size=3, stride=1, padding=1 ),
-            *make_conv_bn_relu(16, 32, kernel_size=1, stride=1, padding=0 ),
+            *make_conv_bn_relu(3, 16, kernel_size=3, stride=1, padding=1),
+            *make_conv_bn_relu(16, 32, kernel_size=1, stride=1, padding=0),
         )
         #64
 
         self.down2 = nn.Sequential(
-            *make_conv_bn_relu(32, 64,  kernel_size=3, stride=1, padding=1 ),
-            *make_conv_bn_relu(64, 128, kernel_size=1, stride=1, padding=0 ),
+            *make_conv_bn_relu(32, 64,  kernel_size=3, stride=1, padding=1),
+            *make_conv_bn_relu(64, 128, kernel_size=1, stride=1, padding=0),
         )
         #32
 
         self.down3 = nn.Sequential(
-            *make_conv_bn_relu(128, 256, kernel_size=3, stride=1, padding=1 ),
-            *make_conv_bn_relu(256, 512, kernel_size=1, stride=1, padding=0 ),
+            *make_conv_bn_relu(128, 256, kernel_size=3, stride=1, padding=1),
+            *make_conv_bn_relu(256, 512, kernel_size=1, stride=1, padding=0),
         )
         #16
 
         self.down4 = nn.Sequential(
-            *make_conv_bn_relu(512,512, kernel_size=3, stride=1, padding=1 ),
-            *make_conv_bn_relu(512,512, kernel_size=1, stride=1, padding=0 ),
+            *make_conv_bn_relu(512,512, kernel_size=3, stride=1, padding=1),
+            *make_conv_bn_relu(512,512, kernel_size=1, stride=1, padding=0),
         )
         #8
 
         self.same = nn.Sequential(
-            *make_conv_bn_relu(512,512, kernel_size=3, stride=1, padding=1 ),
+            *make_conv_bn_relu(512,512, kernel_size=3, stride=1, padding=1),
         )
 
         #16
         self.up4 = nn.Sequential(
-            *make_conv_bn_relu(1024,512, kernel_size=1, stride=1, padding=0 ),
-            *make_conv_bn_relu( 512,512, kernel_size=3, stride=1, padding=1 ),
+            *make_conv_bn_relu(1024,512, kernel_size=1, stride=1, padding=0),
+            *make_conv_bn_relu( 512,512, kernel_size=3, stride=1, padding=1),
             #nn.Dropout(p=0.10),
         )
         #16
 
         self.up3 = nn.Sequential(
-            *make_conv_bn_relu(1024,512, kernel_size=1, stride=1, padding=0 ),
-            *make_conv_bn_relu( 512,128, kernel_size=3, stride=1, padding=1 ),
+            *make_conv_bn_relu(1024,512, kernel_size=1, stride=1, padding=0),
+            *make_conv_bn_relu( 512,128, kernel_size=3, stride=1, padding=1),
         )
         #32
 
         self.up2 = nn.Sequential(
-            *make_conv_bn_relu(256,128, kernel_size=1, stride=1, padding=0 ),
-            *make_conv_bn_relu(128, 32, kernel_size=3, stride=1, padding=1 ),
+            *make_conv_bn_relu(256,128, kernel_size=1, stride=1, padding=0),
+            *make_conv_bn_relu(128, 32, kernel_size=3, stride=1, padding=1),
         )
         #64
 
         self.up1 = nn.Sequential(
-            *make_conv_bn_relu(64, 64, kernel_size=1, stride=1, padding=0 ),
-            *make_conv_bn_relu(64, 32, kernel_size=3, stride=1, padding=1 ),
+            *make_conv_bn_relu(64, 64, kernel_size=1, stride=1, padding=0),
+            *make_conv_bn_relu(64, 32, kernel_size=3, stride=1, padding=1),
         )
         #128
 
-        self.classify = nn.Conv2d(32, num_classes, kernel_size=1, stride=1, padding=0 )
-
-
+        self.classify = nn.Conv2d(32, 1, kernel_size=1, stride=1, padding=0)
 
     def forward(self, x):
-
         #128
-
         down1 = self.down1(x)
         out   = F.max_pool2d(down1, kernel_size=2, stride=2) #64
 

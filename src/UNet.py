@@ -21,6 +21,7 @@ import processing.processing_utils as pu
 from models.models import UNet128 as Net
 
 def run_script(name, epochs, batch_size, debug):
+    print('Did I find a GPU? -->{}<--'.format('Yes!' if GPU_AVAIL else 'No.'))
 
     # Base transforms: to be applied on both input images and output masks
     base_tsfm = transforms.Compose([transforms.Scale(128),
@@ -38,7 +39,10 @@ def run_script(name, epochs, batch_size, debug):
     test_loader = DataLoader(test_dataset, shuffle=False, batch_size=batch_size, num_workers=3)
 
     # Model
-    net = Net()
+    if GPU_AVAIL:
+        net = Net().cuda()
+    else:
+        net = Net()
 
     # Optimizer
     optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9, weight_decay=0.0005)
@@ -55,8 +59,12 @@ def run_script(name, epochs, batch_size, debug):
     for epoch in tqdm(range(epochs)):
 
         for i, im in enumerate(train_loader):
-            images = Variable(im['image'])
-            masks_gt = Variable(im['mask'])
+            if GPU_AVAIL:
+                images = Variable(im['image'].cuda())
+                masks_gt = Variable(im['mask'].cuda())
+            else:
+                images = Variable(im['image'])
+                masks_gt = Variable(im['mask'])
 
             # forward pass
             masks_pred = net.train()(images)

@@ -42,7 +42,7 @@ def rle_decode(im_rle, shape=(1280,1918)):
     Returns numpy array, 1 - mask, 0 - background
     """
 
-    s = mask_rle.split()
+    s = im_rle.split()
     starts, lengths = [np.asarray(x, dtype=int) for x in (s[0:][::2], s[1:][::2])]
     starts -= 1
     ends = starts + lengths

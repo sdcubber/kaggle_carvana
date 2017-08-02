@@ -98,7 +98,7 @@ def run_script(name, epochs, batch_size, debug):
         np_list = [pu.upscale_test_img(img) for img in PIL_list]
 
         # rle encode the predictions
-        rle_encoded_predictions.append([pu.rle(im)[2] for im in np_list])
+        rle_encoded_predictions.append([pu.rle(im) for im in np_list])
         test_idx.append(im['id'])
 
 

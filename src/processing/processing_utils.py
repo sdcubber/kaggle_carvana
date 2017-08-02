@@ -22,36 +22,15 @@ def upscale_test_img(pil_img):
 
     return(im)
 
-
-
-def rle(img, threshold=0.5):
-    """Fast run-lenght encoding of an image.
-    See https://www.kaggle.com/hackerpoet/even-faster-run-length-encoder
-    And https://stackoverflow.com/questions/3678869/pythonic-way-to-combine-two-lists-in-an-alternating-fashion
-    Input
-    -----
-    img: image to be encoded
-    threshold: cut-off probability to assign a pixel to class 1
-
-    Returns
-    -------
-    start_ix: start indices
-    lengths: lengths
-    rle_str: resulting rle encoding as a string
+def rle(img):
     """
-    flat_img = img.flatten()
-    flat_img = np.where(flat_img > threshold, 1, 0).astype(np.uint8)
+    img: numpy array, 1 - mask, 0 - background
+    Returns run length as string formated
+    """
+    pixels = img.flatten()
+    pixels[0] = 0
+    pixels[-1] = 0
+    runs = np.where(pixels[1:] != pixels[:-1])[0] + 2
+    runs[1::2] = runs[1::2] - runs[:-1:2]
 
-    starts = np.array((flat_img[:-1] == 0) & (flat_img[1:] == 1))
-    ends = np.array((flat_img[:-1] == 1) & (flat_img[1:] == 0))
-    starts_ix = np.where(starts)[0] + 2
-    ends_ix = np.where(ends)[0] + 2
-    lengths = ends_ix - starts_ix
-
-    result = result = [None]*(len(starts_ix)+len(lengths))
-    result[::2] = starts_ix
-    result[1::2] = lengths
-    result = [str(e) for e in result]
-
-    rle_str = ' '.join(result)
-    return starts_ix, lengths, rle_str
+    return ' '.join(str(x) for x in runs)

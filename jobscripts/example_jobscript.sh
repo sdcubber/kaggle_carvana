@@ -9,6 +9,6 @@ source activate pytorch
 # run python script
 python saskldfjaksjdfklasdjfklasjdflkas
 
-cd ../shscripts
+cd ../jobscripts
 
 

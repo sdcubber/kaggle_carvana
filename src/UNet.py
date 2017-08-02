@@ -92,7 +92,7 @@ def run_script(name, epochs, batch_size, debug):
         masks_test = net.eval()(images)
 
         # Go from pytorch tensor to list of PIL images, which can be rescaled and interpolated
-        PIL_list = [transforms.ToPILImage()(masks_test.data[b]) for b in range(masks_test.size()[0])]
+        PIL_list = [transforms.ToPILImage()(masks_test.data[b].cpu()) for b in range(masks_test.size()[0])]
 
         # Rescale them to np matrices with the correct size
         np_list = [pu.upscale_test_img(img) for img in PIL_list]

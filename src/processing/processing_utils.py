@@ -8,16 +8,16 @@ def upscale_test_img(pil_img):
     Args
     pil_img: PIL Image
 
-    Return np array of shape (1280,1910)"""
+    Return np array of shape (1280,1918)"""
 
     # Go to square of size (1280,1280) with bilinear interpolation
     im = pil_img.resize((1280,1280), resample=Image.BILINEAR)
     # Go to numpy
     im = np.array(im)/255
 
-    # Pad with zeros to a width of 1910
+    # Pad with zeros to a width of 1918
     # See https://docs.scipy.org/doc/numpy/reference/generated/numpy.pad.html
-    n_padding = (1910 - 1280)// 2
+    n_padding = (1918 - 1280)// 2
     im = np.pad(im,((0,0),(n_padding,n_padding)), 'constant', constant_values=(0))
 
     return(im)

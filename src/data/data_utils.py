@@ -48,5 +48,7 @@ class CarvanaDataset(Dataset):
         if self.common_transforms:
             image=self.common_transforms(image)
             mask=self.common_transforms(mask)
-
-        return {'image':image, 'mask':mask, 'id': im_name}
+        if self.mask_dir:
+            return {'image':image, 'mask':mask, 'id': im_name}
+        else:
+            return {'image':image, 'id': im_name}

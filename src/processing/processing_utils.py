@@ -35,7 +35,7 @@ def rle(img):
 
     return ' '.join(str(x) for x in runs)
 
-def rle_decode(im_rle, shape)=(1280,1918):
+def rle_decode(im_rle, shape=(1280,1918)):
     """
     im_rle: run-length encoded image
     shape: (height,width) of array to return
@@ -49,5 +49,5 @@ def rle_decode(im_rle, shape)=(1280,1918):
     img = np.zeros(shape[0]*shape[1], dtype=np.uint8)
     for lo, hi in zip(starts, ends):
         img[lo:hi] = 1
-        
+
     return img.reshape(shape)

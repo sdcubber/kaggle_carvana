@@ -7,7 +7,7 @@ cd ../src
 source activate pytorch
 
 # run python script
-python UNet.py test 2 -b 16 -db
+python UNet.py test 10 -b 16 
 
 cd ../jobscripts
 

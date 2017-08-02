@@ -21,7 +21,7 @@ from models.models import UNet128 as Net
 
 def run_script(name, epochs, batch_size, debug):
 
-    # Transforms to be applied on input data
+    # Base transforms: to be applied on both input images and output masks
     base_tsfm = transforms.Compose([transforms.Scale(128),
                                     transforms.CenterCrop(128),
                                     transforms.ToTensor()])
@@ -86,7 +86,7 @@ def run_script(name, epochs, batch_size, debug):
     rle_encoded_predictions_all = [j for batch in rle_encoded_predictions for j in batch]
 
     sub = pd.DataFrame({'img': test_idx_all, 'rle_mask': rle_encoded_predictions_all})
-    sub.to_csv('../predictions/test/''.csv'.format(name))
+    sub.to_csv('../predictions/test/{}.csv'.format(name))
 
 
 def main():

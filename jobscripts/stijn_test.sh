@@ -1,13 +1,18 @@
-# test
-
-# cd to src directory
-cd ../src
+# -------------------------- #
+# Run jobs on GPU machine
+# -------------------------- #
 
 # activate python environment
 source activate pytorch
 
-# run python script
-python UNet.py test 10 -b 16 
+# Assign a name for each script, output and error files will be stored with that name
+NAME='test'
 
-cd ../jobscripts
+
+cd ../src
+echo 'Running: '$NAME
+python UNet.py $NAME 10 -b 32  > ../jobscripts/logs/${NAME} 2> ../jobscripts/logs/${NAME}_err
+echo 'Done.'
+
+cd ../jobscripts/logs
 

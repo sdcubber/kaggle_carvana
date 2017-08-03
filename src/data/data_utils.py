@@ -40,7 +40,7 @@ class CarvanaDataset(Dataset):
         mask = None
 
         if self.mask_dir:
-            mask = Image.open(join_path(self.mask_dir, im_name + '_mask.gif'))
+            mask = Image.open(join_path(self.mask_dir, im_name + '_mask.gif')).convert(mode='L')
 
         if self.input_transforms:
             image=self.input_transforms(image)

@@ -20,12 +20,12 @@ import models.model_utils as mu
 import processing.processing_utils as pu
 from models.models import UNet128 as Net
 
-def run_script(name, epochs, batch_size, debug):
+def run_script(name, epochs, im_size, batch_size, debug):
     print('Did I find a GPU? -->{}<--'.format('Yes!' if GPU_AVAIL else 'No.'))
 
     # Base transforms: to be applied on both input images and output masks
-    base_tsfm = transforms.Compose([transforms.Scale(128),
-                                    transforms.CenterCrop(128),
+    base_tsfm = transforms.Compose([transforms.Scale(im_size),
+                                    transforms.CenterCrop(im_size),
                                     transforms.ToTensor()])
 
     # Datasets
@@ -97,10 +97,8 @@ def run_script(name, epochs, batch_size, debug):
         # Rescale them to np matrices with the correct size
         np_list = [pu.upscale_test_img(img) for img in PIL_list]
 
-        threshold = np.mean(np_list)
-        print('Threshold: {}'.format(threshold))
         # rle encode the predictions
-        rle_encoded_predictions.append([pu.rle(im>threshold) for im in np_list])
+        rle_encoded_predictions.append([pu.rle(im>0.5) for im in np_list])
         test_idx.append(im['id'])
 
 
@@ -122,6 +120,7 @@ def main():
     parser = argparse.ArgumentParser(description='UNet segmentation network for Kaggle Carvana competition.')
     parser.add_argument('name', type=str, help='Session name.')
     parser.add_argument('epochs', type=int, help='Number of training epochs')
+    parser.add_argument('im_size', type=int, help='Training image size (rectangular)')
     parser.add_argument('-b','--batch_size', type=int, default=32, help='(optional) Batch size')
     parser.add_argument('-db', '--debug', action='store_true', help='(optional) Debug mode')
     args = parser.parse_args()

@@ -97,8 +97,10 @@ def run_script(name, epochs, batch_size, debug):
         # Rescale them to np matrices with the correct size
         np_list = [pu.upscale_test_img(img) for img in PIL_list]
 
+        threshold = np.mean(np_list)
+        print('Threshold: {}'.format(threshold))
         # rle encode the predictions
-        rle_encoded_predictions.append([pu.rle(im) for im in np_list])
+        rle_encoded_predictions.append([pu.rle(im>threshold) for im in np_list])
         test_idx.append(im['id'])
 
 

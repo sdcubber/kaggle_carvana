@@ -30,7 +30,7 @@ def run_script(name, epochs, im_size, batch_size, debug):
 
     # Datasets
     train_dataset = du.CarvanaDataset('../data/raw/train', '../data/raw/train_masks/',
-                                      common_transforms=base_tsfm, debug=debug)
+                                      mask_transforms=base_tsfm, debug=debug)
     test_dataset = du.CarvanaDataset('../data/raw/test',
                                      input_transforms=base_tsfm, debug=debug)
 

@@ -2,6 +2,27 @@
 
 import numpy as np
 from PIL import Image
+from data.config import *
+
+
+def make_prediction_file(output_file, test_ids, rle_encoded_preds):
+    """
+    Create a prediction file
+    :param output_file: the name of output file 
+    :param test_ids: ids of test files 
+    :param rle_encoded_preds: encoded strings 
+    """
+    # Prepare submission file
+    test_idx_all = [j + '.jpg' for batch in test_ids for j in batch]
+    rle_encoded_predictions_all = [j for batch in rle_encoded_preds for j in batch]
+    predictions_mapping = dict(zip(test_idx_all, rle_encoded_predictions_all))
+
+    # Map predictions to the sample submission file to make sure we make no errors with the ordering of files
+    submission_file = pd.read_csv(SAMPLE_SUB_CSV)
+    submission_file['rle_mask'] = submission_file['img'].map(predictions_mapping)
+
+    submission_file.to_csv(output_file, index=False, compression='gzip')
+
 
 def upscale_test_img(pil_img):
     """Upscale PIL Image to the shape of the test images.
@@ -51,3 +72,91 @@ def rle_decode(im_rle, shape=(1280,1918)):
         img[lo:hi] = 1
 
     return img.reshape(shape)
+
+
+def read_mask_image(car_code, angle_code):
+    """
+    Read image mask, encoding to 0-black 1-white
+    car_code: code of the car
+    angle_code: code of the angle
+    """
+    mask_img_path = join_path(TRAIN_MASKS_PATH, car_code + '_' + angle_code + '_mask.gif')
+    mask_img = np.array(Image.open(mask_img_path).convert(mode='L'))
+
+    return mask_img
+
+
+def show_mask_image(car_code, angle_code):
+    """
+    Show the image mask
+    """
+    mask_img = read_mask_image(car_code, angle_code)
+    plt.imshow(mask_img, cmap='Greys_r')
+    plt.show()
+
+def rle_to_string(codes):
+    """
+    Return string containing rle of 
+    """
+    return ' '.join(str(x) for x in codes)
+
+
+def train_valid_split(csvfile, rotation_ids=range(1, 17), valid=0.1):
+    """ Return a list of ids for training and a list for validation"""
+
+    im_list = pd.read_csv(csvfile)['img']
+    # get all files with specific rotations in rotation_ids
+    rotation_ids = np.char.mod('_%02d', rotation_ids)
+    im_list = np.array([item for item in im_list
+                    if any(rot_id in item for rot_id in rotation_ids)])
+
+    #random shuffle the indices
+    np.random.shuffle(im_list)
+    t_size = int(im_list.shape[0] * (1-valid))
+
+    return im_list[:t_size], im_list[t_size:]
+
+class AverageMeter(object):
+    """Computes and stores the average and current value"""
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
+
+
+class Logger(object):
+    """ Write log info to file and to standard output  """
+    def __init__(self):
+        self.terminal = sys.stdout  #stdout
+        self.file = None
+
+    def open(self, file, mode=None):
+        if mode is None: mode ='w'
+        self.file = open(file, mode)
+
+    def write(self, message: object, is_terminal: object = 1, is_file: object = 1) -> object:
+        if '\r' in message: is_file=0
+
+        if is_terminal == 1:
+            self.terminal.write(message)
+            self.terminal.flush()
+
+        if is_file == 1:
+            self.file.write(message)
+            self.file.flush()
+
+    def flush(self):
+        # this flush method is needed for python 3 compatibility.
+        # this handles the flush command by doing nothing.
+        # you might want to specify some extra behavior here.
+        pass

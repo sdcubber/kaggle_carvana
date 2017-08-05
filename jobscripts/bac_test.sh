@@ -5,6 +5,8 @@
 # activate python environment
 source activate pytorch
 
+cd ../src
+
 # Assign a name for each script. Output will be logged under that name
 NAME='UNet_256'
 

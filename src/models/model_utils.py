@@ -76,7 +76,7 @@ def evaluate(model, test_loader, criterion):
         loss = criterion(output, target_var)
 
         # measure dice and record loss
-        score = get_dice_score(output.data.numpy(), target.numpy())
+        score = get_dice_score(output.data.cpu().numpy(), target.cpu().numpy())
         dices.update(score, input.size(0))
         losses.update(loss.data[0], input.size(0))
 
@@ -154,7 +154,7 @@ def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, log=
         loss = criterion(output, target_var)
 
         # measure dice and record loss
-        score = get_dice_score(output.data.numpy(), target.numpy())
+        score = get_dice_score(output.data.cpu().numpy(), target.cpu().numpy())
         dices.update(score, input.size(0))
         losses.update(loss.data[0], input.size(0))
 

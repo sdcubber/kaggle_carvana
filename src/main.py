@@ -71,14 +71,14 @@ def main():
                                 input_transforms=input_trans,
                                 mask_transforms=mask_trans,
                                 rotation_ids=rot_id,
-                                debug=True)
+                                debug=False)
     dset_valid = CarvanaDataset(im_dir=TRAIN_IMG_PATH,
                                 ids_list=valid_ids,
                                 mask_dir=TRAIN_MASKS_PATH,
                                 input_transforms=input_trans,
                                 mask_transforms=mask_trans,
                                 rotation_ids=rot_id,
-                                debug=True)
+                                debug=False)
 
     train_loader = DataLoader(dset_train,
                               batch_size=args.batch_size,
@@ -98,7 +98,7 @@ def main():
     dset_test = CarvanaDataset(im_dir=TEST_IMG_PATH,
                                input_transforms=input_trans,
                                rotation_ids=rot_id,
-                               debug=True)
+                               debug=False)
     test_loader = DataLoader(dset_test,
                              batch_size=args.batch_size,
                              shuffle=False,

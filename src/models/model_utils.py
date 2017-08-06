@@ -13,8 +13,8 @@ class DiceLoss(_Loss):
         super(DiceLoss, self).__init__()
 
     def forward(self, input, target):
-        return 1 - 2 * torch.sum(input * target) \
-                   / (torch.sum(input) + torch.sum(target))
+        return 1 - torch.mean(2 * torch.sum(input * target, 1) \
+                                / (torch.sum(input, 1) + torch.sum(target,1)))
 
 
 def predict(model, test_loader, log=None):

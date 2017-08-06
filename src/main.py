@@ -1,47 +1,25 @@
-from models.model_utils import *
-from processing.processing_utils import *
+from data.config import *
+# custom modules
+import models.models as mo
+import models.model_utils as mu
+import processing.processing_utils as pu
+from data.data_utils import CarvanaDataset
 
 from torch.utils.data import DataLoader
-from data.data_utils import CarvanaDataset
-from models.models import UNet128
+import torchvision.transforms as transforms
 
-parser = argparse.ArgumentParser(description='PyTorch UNet Training')
-
-parser.add_argument('--arch', '-a', metavar='ARCH', default='UNet',
-                    help='model architecture ')
-parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
-                    help='number of data loading workers (default: 4)')
-parser.add_argument('--epochs', default=30, type=int, metavar='N',
-                    help='number of total epochs to run')
-parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
-                    help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=16, type=int,
-                    metavar='N', help='mini-batch size (default: 16)')
-parser.add_argument('--img-size', default=256, type=int,
-                    metavar='N', help='image size (default: 256)')
-parser.add_argument('--lr', '--learning-rate', default=0.01, type=float,
-                    metavar='LR', help='initial learning rate')
-parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
-                    help='momentum')
-parser.add_argument('--valid-size', default=0.1, type=float, metavar='M',
-                    help='valid_size')
-parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
-                    metavar='W', help='weight decay (default: 1e-4)')
-parser.add_argument('--resume', default='', type=str, metavar='PATH',
-                    help='path to latest checkpoint (default: none)')
-
-def main():
+def run_experiment(parser):
     args = parser.parse_args()
 
     file = datetime.now().strftime('log_%H_%M_%d_%m_%Y_{}.log'.format(args.arch))
-    log = Logger()
-    log.open(os.path.join(OUTPUT_TEMP_PATH, file), mode='w')
+    log = pu.Logger()
+    log.open(os.path.join(OUTPUT_LOG_PATH, file), mode='w')
 
     log.write(str(args) + "\n")
 
     # define loss function (criterion) and optimizer
     criterion = nn.BCELoss()
-    model = UNet128(args.arch)
+    model = mo.UNet128(args.arch)
     optimizer = torch.optim.SGD(model.parameters(),
                                 lr=args.lr,
                                 momentum=args.momentum,
@@ -49,19 +27,23 @@ def main():
     if GPU_AVAIL:
         model = model.cuda()
         criterion = criterion.cuda()
-        log.write("Using GPUs...")
-    #--------------------------------TRAINING-----------------------------------------#
-    #data augmentation
-    input_trans = transforms.Compose([transforms.Scale(args.img_size),
-                                      transforms.CenterCrop(args.img_size),
+        log.write("Using GPU...")
+
+    # --- TRAINING --- #
+
+    # Type of car rotations
+    rot_id = [args.rotation] if args.rotation else range(1,17)
+
+    # Data augmentation
+    input_trans = transforms.Compose([transforms.Scale(args.im_size),
+                                      transforms.CenterCrop(args.im_size),
                                       transforms.ToTensor()])
-    mask_trans = transforms.Compose([transforms.Scale(args.img_size),
-                                     transforms.CenterCrop(args.img_size)])
-    # types of rotations
-    rot_id= range(1, 17)
+
+    mask_trans = transforms.Compose([transforms.Scale(args.im_size),
+                                     transforms.CenterCrop(args.im_size)])
 
     #split data set for training and valid
-    train_ids, valid_ids = train_valid_split(TRAIN_MASKS_CSV, rotation_ids=rot_id,
+    train_ids, valid_ids = pu.train_valid_split(TRAIN_MASKS_CSV, rotation_ids=rot_id,
                                              valid=args.valid_size)
 
     #preparing data flow for training the network
@@ -71,14 +53,15 @@ def main():
                                 input_transforms=input_trans,
                                 mask_transforms=mask_trans,
                                 rotation_ids=rot_id,
-                                debug=False)
+                                debug=args.debug)
+
     dset_valid = CarvanaDataset(im_dir=TRAIN_IMG_PATH,
                                 ids_list=valid_ids,
                                 mask_dir=TRAIN_MASKS_PATH,
                                 input_transforms=input_trans,
                                 mask_transforms=mask_trans,
                                 rotation_ids=rot_id,
-                                debug=False)
+                                debug=args.debug)
 
     train_loader = DataLoader(dset_train,
                               batch_size=args.batch_size,
@@ -91,27 +74,46 @@ def main():
                               num_workers=args.workers,
                               pin_memory=GPU_AVAIL)
 
-    best_dice, best_loss = train(train_loader, valid_loader, model, criterion, optimizer, args, log)
+    best_dice, best_loss = mu.train(train_loader, valid_loader, model, criterion, optimizer, args, log)
     #---------------------------------------------------------------------------------#
 
-    #---------------------------------TESTING-----------------------------------------#
+    # --- TESTING --- #
     dset_test = CarvanaDataset(im_dir=TEST_IMG_PATH,
                                input_transforms=input_trans,
                                rotation_ids=rot_id,
-                               debug=False)
+                               debug=args.debug)
     test_loader = DataLoader(dset_test,
                              batch_size=args.batch_size,
                              shuffle=False,
                              num_workers=args.workers,
                              pin_memory=GPU_AVAIL)
 
-    test_idx, rle_encoded_predictions = predict(model, test_loader, log)
-    output_file = join_path(OUTPUT_SUB_PATH, 'subm_{}_{:.5f}_{:.5f}.gz'
+    test_idx, rle_encoded_predictions = mu.predict(model, test_loader, log)
+    output_file = os.path.join(OUTPUT_SUB_PATH, 'subm_{}_{:.5f}_{:.5f}.gz'
                             .format(model.modelName, best_dice, best_loss))
-    make_prediction_file(output_file, test_idx, rle_encoded_predictions)
+    pu.make_prediction_file(output_file, test_idx, rle_encoded_predictions)
     # --------------------------------------------------------------------------------#
 
-if __name__ == '__main__':
 
-    random.seed(123456789)
-    main()
+def main():
+    prs = argparse.ArgumentParser(description='Kaggle: Carvana car segmentation challenge')
+    prs.add_argument('name', type=str, help='Name for the experiment')
+    prs.add_argument('im_size', default=256, type=int, help='image size (default: 256)')
+    prs.add_argument('arch', default='UNet', help='Model architecture ')
+    prs.add_argument('epochs', default=30, type=int, help='Number of total epochs to run')
+    prs.add_argument('-j', '--workers', default=3, type=int, metavar='N', help='Number of data loading workers')
+    prs.add_argument('-lr', '--lr', default=0.01, type=float, metavar='LR', help='Initial learning rate')
+    prs.add_argument('-b', '--batch_size', default=16, type=int, metavar='N', help='Mini-batch size (default: 16)')
+    prs.add_argument('-rot', '--rotation', default=None, type=int, help='Type of car rotation. Default None returns all rotations.')
+    prs.add_argument('--start_epoch', default=0, type=int, metavar='N', help='Manual epoch number (useful on restarts)')
+    prs.add_argument('--momentum', default=0.9, type=float, metavar='M', help='momentum')
+    prs.add_argument('--valid_size', default=0.1, type=float, metavar='M', help='Validation set size')
+    prs.add_argument('--weight_decay', '--wd', default=1e-4, type=float, metavar='W', help='weight decay (default: 1e-4)')
+    prs.add_argument('--resume', default='', type=str, metavar='PATH', help='Path to latest checkpoint (default: none)')
+    prs.add_argument('-db', '--debug', action='store_true', help='Debug mode.')
+
+    run_experiment(prs)
+
+if __name__ == '__main__':
+    # random.seed(123456789) # Fix seed
+    sys.exit(main())

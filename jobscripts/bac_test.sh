@@ -8,10 +8,13 @@ source activate pytorch
 cd ../src
 
 # Assign a name for each script. Output will be logged under that name
-NAME='UNet_256'
+NAME='UNet_256_512'
 
 # run python script
-python main.py --arch ${NAME} 2>&1 | tee ../jobscripts/logs/${NAME}
+python main.py $NAME 512 UNet_128 1 -b 4 -db
+
+# Copy log file to dropbox
+# TODO
 
 cd ../jobscripts
 

@@ -100,9 +100,9 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
         log.write("valid_loss={:.5f}, valid_dice={:.5f} \n".format(valid_loss, valid_dice))
 
         # saving state
-        checkpoint_file = join_path(OUTPUT_TEMP_PATH, 'checkpoint_{}_{}_{}.pth.tar'
+        checkpoint_file = os.path.join(OUTPUT_LOG_PATH, 'checkpoint_{}_{}_{}.pth.tar'
                                     .format(model.modelName, epoch, valid_dice))
-        bestpoint_file = join_path(OUTPUT_TEMP_PATH, 'modelbest_{}.pth.tar'
+        bestpoint_file = os.path.join(OUTPUT_LOG_PATH, 'modelbest_{}.pth.tar'
                                    .format(model.modelName))
 
         # remember best dice and save checkpoint
@@ -124,12 +124,12 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
         # saving the best weights
         if is_best:
             log.write("Saving the best weights...\n")
-            torch.save(model, join_path(OUTPUT_WEIGHT_PATH, 'best_{}.torch'.format(model.modelName)))
+            torch.save(model, os.path.join(OUTPUT_WEIGHT_PATH, 'best_{}.torch'.format(model.modelName)))
 
         log.write("----------------------------------------------------------\n")
 
     # load the best model
-    model = torch.load(join_path(OUTPUT_WEIGHT_PATH, 'best_{}.torch'.format(model.modelName)))
+    model = torch.load(os.path.join(OUTPUT_WEIGHT_PATH, 'best_{}.torch'.format(model.modelName)))
 
     return best_dice, best_loss
 
@@ -178,9 +178,9 @@ def save_checkpoint(state, is_best, filename, best_filename):
 
 
 def load_checkpoint(args, model, optimizer, log=None):
-    """ 
+    """
     Load saved parameters
-    Return the best dice score and the best loss score 
+    Return the best dice score and the best loss score
     """
 
     if args.resume and os.path.isfile(args.resume):

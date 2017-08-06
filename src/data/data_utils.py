@@ -43,14 +43,14 @@ class CarvanaDataset(Dataset):
 
     def __getitem__(self, idx):
         im_name = self.im_list[idx]
-        image = Image.open(join_path(self.im_dir, im_name + '.jpg'))
+        image = Image.open(os.path.join(self.im_dir, im_name + '.jpg'))
         mask = 0
 
         if self.input_transforms:
             image = self.input_transforms(image)
 
         if self.mask_dir:
-            mask = Image.open(join_path(self.mask_dir, im_name + '_mask.gif'))  # .convert(mode='L')
+            mask = Image.open(os.path.join(self.mask_dir, im_name + '_mask.gif'))  # .convert(mode='L')
 
             if self.mask_transforms:
                 mask = self.mask_transforms(mask)

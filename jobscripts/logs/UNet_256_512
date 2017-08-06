@@ -1,0 +1,27 @@
+Namespace(arch='UNet_256_512', batch_size=16, epochs=30, img_size=512, lr=0.01, momentum=0.9, resume='', start_epoch=0, valid_size=0.1, weight_decay=0.0001, workers=4)
+Using GPUs...=> no checkpoint found at ''
+THCudaCheck FAIL file=/py/conda-bld/pytorch_1493677666423/work/torch/lib/THC/generic/THCStorage.cu line=66 error=2 : out of memory
+Traceback (most recent call last):
+  File "main.py", line 117, in <module>
+    main()
+  File "main.py", line 94, in main
+    best_dice, best_loss = train(train_loader, valid_loader, model, criterion, optimizer, args, log)
+  File "/home/stijndc/Desktop/ssd_repos/kaggle_carvana/src/models/model_utils.py", line 96, in train
+    run_epoch(train_loader, model, criterion, optimizer, epoch, args.epochs, log)
+  File "/home/stijndc/Desktop/ssd_repos/kaggle_carvana/src/models/model_utils.py", line 153, in run_epoch
+    output = model(input_var)
+  File "/home/stijndc/miniconda3/envs/pytorch/lib/python3.5/site-packages/torch/nn/modules/module.py", line 206, in __call__
+    result = self.forward(*input, **kwargs)
+  File "/home/stijndc/Desktop/ssd_repos/kaggle_carvana/src/models/models.py", line 115, in forward
+    out   = self.up4(out)
+  File "/home/stijndc/miniconda3/envs/pytorch/lib/python3.5/site-packages/torch/nn/modules/module.py", line 206, in __call__
+    result = self.forward(*input, **kwargs)
+  File "/home/stijndc/miniconda3/envs/pytorch/lib/python3.5/site-packages/torch/nn/modules/container.py", line 64, in forward
+    input = module(input)
+  File "/home/stijndc/miniconda3/envs/pytorch/lib/python3.5/site-packages/torch/nn/modules/module.py", line 206, in __call__
+    result = self.forward(*input, **kwargs)
+  File "/home/stijndc/miniconda3/envs/pytorch/lib/python3.5/site-packages/torch/nn/modules/conv.py", line 237, in forward
+    self.padding, self.dilation, self.groups)
+  File "/home/stijndc/miniconda3/envs/pytorch/lib/python3.5/site-packages/torch/nn/functional.py", line 40, in conv2d
+    return f(input, weight, bias)
+RuntimeError: cuda runtime error (2) : out of memory at /py/conda-bld/pytorch_1493677666423/work/torch/lib/THC/generic/THCStorage.cu:66

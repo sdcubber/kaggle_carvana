@@ -8,9 +8,9 @@ from data.config import *
 def make_prediction_file(output_file, test_ids, rle_encoded_preds):
     """
     Create a prediction file
-    :param output_file: the name of output file 
-    :param test_ids: ids of test files 
-    :param rle_encoded_preds: encoded strings 
+    :param output_file: the name of output file
+    :param test_ids: ids of test files
+    :param rle_encoded_preds: encoded strings
     """
     # Prepare submission file
     test_idx_all = [j + '.jpg' for batch in test_ids for j in batch]
@@ -80,7 +80,7 @@ def read_mask_image(car_code, angle_code):
     car_code: code of the car
     angle_code: code of the angle
     """
-    mask_img_path = join_path(TRAIN_MASKS_PATH, car_code + '_' + angle_code + '_mask.gif')
+    mask_img_path = os.path.join(TRAIN_MASKS_PATH, car_code + '_' + angle_code + '_mask.gif')
     mask_img = np.array(Image.open(mask_img_path).convert(mode='L'))
 
     return mask_img
@@ -96,7 +96,7 @@ def show_mask_image(car_code, angle_code):
 
 def rle_to_string(codes):
     """
-    Return string containing rle of 
+    Return string containing rle of
     """
     return ' '.join(str(x) for x in codes)
 

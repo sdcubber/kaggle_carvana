@@ -124,7 +124,7 @@ def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, log=
     dices = AverageMeter()
 
     # number of iterations before print outputs
-    print_iter = len(train_loader.dataset) // (10 * train_loader.batch_size)
+    print_iter = np.ceil(len(train_loader.dataset) / (10 * train_loader.batch_size))
 
     for batch_idx, (input, target, id) in enumerate(train_loader):
 

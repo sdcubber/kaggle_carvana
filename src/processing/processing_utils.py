@@ -25,23 +25,28 @@ def make_prediction_file(output_file, test_ids, rle_encoded_preds):
     submission_file.to_csv(output_file, index=False, compression='gzip')
 
 
-def upscale_test_img(pil_img):
+def upscale_test_img(pil_img, crop=False):
     """Upscale PIL Image to the shape of the test images.
     Args
     pil_img: PIL Image
-
+    crop: True if original images were centered cropped (requires different upscaling)
     Return np array of shape (1280,1918)"""
 
-    # Go to square of size (1280,1280) with bilinear interpolation
-    im = pil_img.resize((1280,1280), resample=Image.BILINEAR)
-    # Go to numpy
-    im = np.array(im)/255
+    if crop:
+        # Go to square of size (1280,1280) with bilinear interpolation
+        im = pil_img.resize((1280,1280), resample=Image.BILINEAR)
+        # Go to numpy
+        im = np.array(im)/255
+        # Pad with zeros to a width of 1918
+        # See https://docs.scipy.org/doc/numpy/reference/generated/numpy.pad.html
+        n_padding = (1918 - 1280)// 2
+        im = np.pad(im,((0,0),(n_padding,n_padding)), 'constant', constant_values=(0))
 
-    # Pad with zeros to a width of 1918
-    # See https://docs.scipy.org/doc/numpy/reference/generated/numpy.pad.html
-    n_padding = (1918 - 1280)// 2
-    im = np.pad(im,((0,0),(n_padding,n_padding)), 'constant', constant_values=(0))
-
+    else:
+        # Go to original resolution by upscaling, no padding required since no cropping was done
+        im = pil.img.resize((1280,1918), resample=Image.BILINEAR)
+        im = np.array(im)/255
+    
     return(im)
 
 def rle(img):

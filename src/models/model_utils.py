@@ -115,7 +115,7 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
     return best_dice, best_loss
 
 def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, log=None):
-    """Run one epoc of training."""
+    """Run one epoch of training."""
     # switch to train mode
     model.train()
 

@@ -73,9 +73,9 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
 
         # Save only the best state. Update each time the model improves
         checkpoint_file = os.path.join(OUTPUT_WEIGHT_PATH, 'checkpoint_{}_{}_{}.pth.tar'
-                                    .format(model.modelName, epoch, valid_dice))
+                                    .format(model.modelName)
         bestpoint_file = os.path.join(OUTPUT_WEIGHT_PATH, 'modelbest_{}.pth.tar'
-                                   .format(model.modelName))
+                                   .format(model.modelName, epoch, valid_dice))
 
         # remember best dice and save checkpoint
         is_best = (valid_dice > best_dice) or \

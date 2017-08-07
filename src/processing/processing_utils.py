@@ -127,11 +127,11 @@ def train_valid_split(csvfile, rotation_ids=range(1, 17), valid=0.1):
 
     return im_list[:t_size], im_list[t_size:]
 
-#def update_spreadsheet(timestamp, im_size, arch, epochs, best_dice, best_loss, modelname, rotation):
-#    """Update the spreadsheet with information from this experiment"""
-#    sheet = pd.read_xslx('../')
+def update_spreadsheet(timestamp, im_size, arch, epochs, best_dice, best_loss, modelname, rotation):
+    """Update the spreadsheet with information from this experiment"""
+    # TODO
 
-#    return(True)
+    return(True)
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""

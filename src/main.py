@@ -112,12 +112,8 @@ def run_experiment(parser):
 
     pu.make_prediction_file(output_file_train, train_ids, rle_encoded_predictions_train, train_data=True)
     pu.make_prediction_file(output_file, test_idx, rle_encoded_predictions)
-
-    log.write('Updating spreadsheet...')
-    pu.update_spreadsheet(timestamp, im_size, arch, epochs, best_dice, best_loss, model.modelName, rotation)
     log.write('Done!')
     # --------------------------------------------------------------------------------#
-
 
 def main():
     prs = argparse.ArgumentParser(description='Kaggle: Carvana car segmentation challenge')

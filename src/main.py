@@ -97,7 +97,6 @@ def run_experiment(parser):
 
 def main():
     prs = argparse.ArgumentParser(description='Kaggle: Carvana car segmentation challenge')
-    prs.add_argument('name', type=str, help='Name for the experiment')
     prs.add_argument('im_size', default=256, type=int, help='image size (default: 256)')
     prs.add_argument('arch', default='UNet', help='Model architecture ')
     prs.add_argument('epochs', default=30, type=int, help='Number of total epochs to run')

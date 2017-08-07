@@ -28,6 +28,7 @@ class CarvanaDataset(Dataset):
         """
         self.im_dir = im_dir
         self.mask_dir = mask_dir
+        self.im_size = im_size
 
         if ids_list is None:
             ids_list = os.listdir(im_dir)
@@ -46,7 +47,7 @@ class CarvanaDataset(Dataset):
     def __getitem__(self, idx):
         im_name = self.im_list[idx]
         image = Image.open(os.path.join(self.im_dir, im_name + '.jpg'))
-        image = image.resize((im_size, im_size))
+        image = image.resize((self.im_size, self.im_size))
         mask = 0
 
         if self.input_transforms:
@@ -54,7 +55,7 @@ class CarvanaDataset(Dataset):
 
         if self.mask_dir:
             mask = Image.open(os.path.join(self.mask_dir, im_name + '_mask.gif'))  # .convert(mode='L')
-            mask  = mask.resize((im_size, im_size))
+            mask  = mask.resize((self.im_size, self.im_size))
 
             if self.mask_transforms:
                 mask = self.mask_transforms(mask)

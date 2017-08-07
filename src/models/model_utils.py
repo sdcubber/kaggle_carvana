@@ -44,7 +44,7 @@ def predict(model, test_loader, log=None):
         np_list = [pu.upscale_test_img(img) for img in PIL_list]
 
         # rle encode the predictions
-        rle_encoded_predictions.append([pu.rle(im >= 0.5) for im in np_list])
+        rle_encoded_predictions.append([pu.rle(im > 0.5) for im in np_list])
         test_idx.append(id)
 
         # write to the log file

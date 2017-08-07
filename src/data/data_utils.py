@@ -10,6 +10,7 @@ class CarvanaDataset(Dataset):
     def __init__(self, im_dir,
                  ids_list=None,
                  mask_dir=None,
+                 im_size=128,
                  input_transforms=None,
                  mask_transforms=None,
                  rotation_ids=range(1, 17),
@@ -19,6 +20,7 @@ class CarvanaDataset(Dataset):
         im_dir (string): Directory with all the images.
         ids_list (string array): list of all file ids (train or valid)
         mask_dir (string): Directory with the masks. None for test data.
+        im_size = Image size. Scaling is done in PIL.
         input_transforms: transforms only on input images
         mask_transforms: transforms on input and output images
         rotation_ids (list [1-16]): containing types of rotations that we are interested
@@ -44,6 +46,7 @@ class CarvanaDataset(Dataset):
     def __getitem__(self, idx):
         im_name = self.im_list[idx]
         image = Image.open(os.path.join(self.im_dir, im_name + '.jpg'))
+        image = image.resize((im_size, im_size))
         mask = 0
 
         if self.input_transforms:
@@ -51,12 +54,13 @@ class CarvanaDataset(Dataset):
 
         if self.mask_dir:
             mask = Image.open(os.path.join(self.mask_dir, im_name + '_mask.gif'))  # .convert(mode='L')
+            mask  = mask.resize((im_size, im_size))
 
             if self.mask_transforms:
                 mask = self.mask_transforms(mask)
 
-            mask = np.array(mask, np.float32).reshape(1, mask.size[0], mask.size[1])
-            mask = torch.from_numpy(mask)
+            mask = np.array(mask, np.int).reshape(1, mask.size[0], mask.size[1])
+            mask = torch.from_numpy(mask) # To_Tensor is done with the transforms
 
         return image, mask, im_name #it should be faster than a map
 

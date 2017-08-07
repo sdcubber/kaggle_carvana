@@ -41,7 +41,7 @@ def upscale_test_img(pil_img, crop=False):
         # Go to square of size (1280,1280) with bilinear interpolation
         im = pil_img.resize((1280,1280), resample=Image.BILINEAR)
         # Go to numpy
-        im = np.array(im)
+        im = np.array(im) // 255
         # Pad with zeros to a width of 1918
         # See https://docs.scipy.org/doc/numpy/reference/generated/numpy.pad.html
         n_padding = (1918 - 1280)// 2
@@ -50,7 +50,7 @@ def upscale_test_img(pil_img, crop=False):
     else:
         # Go to original resolution by upscaling, no padding required since no cropping was done
         im = pil_img.resize((1918,1280), resample=Image.ANTIALIAS)
-        im = np.array(im)
+        im = np.array(im) // 255
 
     return(im)
 

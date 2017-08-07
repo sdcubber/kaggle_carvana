@@ -60,7 +60,7 @@ class CarvanaDataset(Dataset):
             if self.mask_transforms:
                 mask = self.mask_transforms(mask)
 
-            mask = np.array(mask, np.int).reshape(1, mask.size[0], mask.size[1])
+            mask = np.array(mask, np.float32).reshape(1, mask.size[0], mask.size[1])
             mask = torch.from_numpy(mask) # To_Tensor is done with the transforms
 
         return image, mask, im_name #it should be faster than a map

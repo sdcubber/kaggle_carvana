@@ -1,6 +1,7 @@
 TO-DO list
 ============================
 - check if rle function is always correct
+- check if torch.transforms.Scale does the same as PIL.Image.resize
 
 
 

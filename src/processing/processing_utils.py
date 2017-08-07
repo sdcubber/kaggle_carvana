@@ -61,16 +61,15 @@ def rle(img):
     Returns run length as string formated
     """
     pixels = img.flatten()
-    j, i, n = 0, 0, len(pixels)
+    i, n = 0, len(pixels)
     runs = []
 
     while i < n:
         while i < n and pixels[i] == 0: i += 1
         b = i
         while i < n and pixels[i] == 1: i += 1
-        e = i
-        if b != e:
-            runs.extend([b + 1, e - b])
+        if b != i:
+            runs.extend([b + 1, i - b])
 
     return ' '.join(str(x) for x in runs)
 

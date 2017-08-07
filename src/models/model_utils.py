@@ -86,7 +86,7 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
 
         if is_best: # Save only if it's the best model
             log.write('Saving best model architecture...\n')
-            save_checkpoint({
+            torch.save({
                 'epoch': epoch + 1,
                 'arch': model.modelName,
                 'state_dict': model.state_dict(),
@@ -178,11 +178,6 @@ def evaluate(model, data_loader, criterion):
         losses.update(loss.data[0], input.size(0))
 
     return dices.avg, losses.avg
-
-
-def save_checkpoint(state, is_best, filename, best_filename):
-    torch.save(state, best_filename)
-
 
 def load_checkpoint(args, model, optimizer, log=None):
     """

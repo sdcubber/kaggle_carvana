@@ -47,7 +47,7 @@ def run_experiment(parser):
     dset_train = CarvanaDataset(im_dir=TRAIN_IMG_PATH,
                                 ids_list=train_ids,
                                 mask_dir=TRAIN_MASKS_PATH,
-                                im_size=im_size,
+                                im_size=args.im_size,
                                 input_transforms=input_trans,
                                 mask_transforms=mask_trans,
                                 rotation_ids=rot_id,
@@ -56,7 +56,7 @@ def run_experiment(parser):
     dset_valid = CarvanaDataset(im_dir=TRAIN_IMG_PATH,
                                 ids_list=valid_ids,
                                 mask_dir=TRAIN_MASKS_PATH,
-                                im_size=im_size,
+                                im_size=args.im_size,
                                 input_transforms=input_trans,
                                 mask_transforms=mask_trans,
                                 rotation_ids=rot_id,
@@ -79,7 +79,7 @@ def run_experiment(parser):
     # --- TESTING --- #
     dset_train_full = CarvanaDataset(im_dir=TRAIN_IMG_PATH,
                                      input_transforms=input_trans,
-                                     im_size=im_size,
+                                     im_size=args.im_size,
                                      rotation_ids=rot_id,
                                      debug=args.debug)
     train_full_loader = DataLoader(dset_train_full,
@@ -90,7 +90,7 @@ def run_experiment(parser):
 
     dset_test = CarvanaDataset(im_dir=TEST_IMG_PATH,
                                input_transforms=input_trans,
-                               im_size=im_size,
+                               im_size=args.im_size,
                                rotation_ids=rot_id,
                                debug=args.debug)
     test_loader = DataLoader(dset_test,

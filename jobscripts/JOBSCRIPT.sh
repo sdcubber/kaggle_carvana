@@ -9,7 +9,7 @@ source activate pytorch
 cd ../src
 
 # run main script
-python main.py 512 UNet_128 5 -b 4 -db
+python main.py 128 UNet_128 30 -b 32
 
 source deactivate 
 

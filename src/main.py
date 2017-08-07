@@ -35,12 +35,12 @@ def run_experiment(parser):
     rot_id = [args.rotation] if args.rotation else range(1,17)
 
     # Data augmentation
-    input_trans = transforms.Compose([transforms.Scale(args.im_size),
-                                      transforms.CenterCrop(args.im_size),
+    input_trans = transforms.Compose([transforms.Scale([args.im_size, args.im_size]),
+                                      #transforms.CenterCrop(args.im_size),
                                       transforms.ToTensor()])
 
-    mask_trans = transforms.Compose([transforms.Scale(args.im_size),
-                                     transforms.CenterCrop(args.im_size)])
+    mask_trans = transforms.Compose([transforms.Scale([args.im_size, args.im_size])])
+                                     #,transforms.CenterCrop(args.im_size)])
 
     #split data set for training and valid
     train_ids, valid_ids = pu.train_valid_split(TRAIN_MASKS_CSV, rotation_ids=rot_id,

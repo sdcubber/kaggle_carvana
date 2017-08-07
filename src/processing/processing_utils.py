@@ -41,7 +41,7 @@ def upscale_test_img(pil_img, crop=False):
         # Go to square of size (1280,1280) with bilinear interpolation
         im = pil_img.resize((1280,1280), resample=Image.BILINEAR)
         # Go to numpy
-        im = np.array(im)/255
+        im = np.array(im)
         # Pad with zeros to a width of 1918
         # See https://docs.scipy.org/doc/numpy/reference/generated/numpy.pad.html
         n_padding = (1918 - 1280)// 2
@@ -49,8 +49,8 @@ def upscale_test_img(pil_img, crop=False):
 
     else:
         # Go to original resolution by upscaling, no padding required since no cropping was done
-        im = pil_img.resize((1280,1918), resample=Image.BILINEAR)
-        im = np.array(im)/255
+        im = pil_img.resize((1918,1280), resample=Image.ANTIALIAS)
+        im = np.array(im)
 
     return(im)
 
@@ -92,7 +92,7 @@ def read_mask_image(car_code, angle_code):
     angle_code: code of the angle
     """
     mask_img_path = os.path.join(TRAIN_MASKS_PATH, car_code + '_' + angle_code + '_mask.gif')
-    mask_img = np.array(Image.open(mask_img_path).convert(mode='L'))
+    mask_img = np.array(Image.open(mask_img_path)) #.convert(mode='L'))
 
     return mask_img
 
@@ -127,11 +127,11 @@ def train_valid_split(csvfile, rotation_ids=range(1, 17), valid=0.1):
 
     return im_list[:t_size], im_list[t_size:]
 
-def update_spreadsheet():
+#def update_spreadsheet(timestamp, im_size, arch, epochs, best_dice, best_loss, modelname, rotation):
+#    """Update the spreadsheet with information from this experiment"""
+#    sheet = pd.read_xslx('../')
 
-
-
-    return(True)
+#    return(True)
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""

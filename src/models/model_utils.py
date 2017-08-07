@@ -97,7 +97,7 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
         # saving the best weights
         if is_best:
             log.write("Saving the best weights...\n")
-            torch.save(model, os.path.join(OUTPUT_WEIGTH_PATH, 'best_{}.torch'.format(model.modelName)))
+            torch.save(model, os.path.join(OUTPUT_WEIGHT_PATH, 'best_{}.torch'.format(model.modelName)))
 
         log.write("----------------------------------------------------------\n")
 

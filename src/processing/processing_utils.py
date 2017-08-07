@@ -45,6 +45,7 @@ def upscale_test_img(pil_img):
 
 def rle(img):
     """
+    This function is not correct....
     img: numpy array, 1 - mask, 0 - background
     Returns run length as string formated
     """

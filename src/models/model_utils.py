@@ -17,7 +17,7 @@ class DiceLoss(_Loss):
 
 
 def predict(model, test_loader, log=None):
-    """ Return the ids and their encoded predictions"""
+    """Make rle-encoded predictions on a set of data. Returns image ids and encoded predictions."""
 
     # switch to evaluate mode
     model.eval()

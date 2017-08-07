@@ -78,6 +78,16 @@ def run_experiment(parser):
     #---------------------------------------------------------------------------------#
 
     # --- TESTING --- #
+    dset_train_full = CarvanaDataset(im_dir=TRAIN_IMG_PATH,
+                                     input_transforms=input_trans,
+                                     rotation_ids=rot_id,
+                                     debug=args.debug)
+    train_full_loader = DataLoader(dset_train_full,
+                                    batch_size=args.batch_size,
+                                    shuffle=False,
+                                    num_workers=args.workers,
+                                    pin_memory=GPU_AVAIL)
+
     dset_test = CarvanaDataset(im_dir=TEST_IMG_PATH,
                                input_transforms=input_trans,
                                rotation_ids=rot_id,
@@ -88,10 +98,22 @@ def run_experiment(parser):
                              num_workers=args.workers,
                              pin_memory=GPU_AVAIL)
 
+    log.write('Predicting training data...\n')
+    train_idx, rle_encoded_predictions_train = mu.predict(model, train_full_loader, log)
+    log.write('Predicting test data...\n')
     test_idx, rle_encoded_predictions = mu.predict(model, test_loader, log)
+
+    log.write('Writing encoded csv files...\n')
+
+    output_file_train = os.path.join(OUTPUT_SUB_PATH, 'train', 'TRAIN_{}_{:.5f}_{:.5f}.gz'
+                            .format(timestamp.strftime('log_%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice, best_loss))
     output_file = os.path.join(OUTPUT_SUB_PATH, 'test', '{}_{:.5f}_{:.5f}.gz'
                             .format(timestamp.strftime('log_%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice, best_loss))
+
+    pu.make_prediction_file(output_file_train, train_ids, rle_encoded_predictions_train, train_data=True)
     pu.make_prediction_file(output_file, test_idx, rle_encoded_predictions)
+
+    log.write('Done!')
     # --------------------------------------------------------------------------------#
 
 

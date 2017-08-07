@@ -10,8 +10,8 @@ import torchvision.transforms as transforms
 
 def run_experiment(parser):
     args = parser.parse_args()
-
-    file = datetime.now().strftime('log_%H_%M_%d_%m_%Y_{}.log'.format(args.arch))
+    timestamp = datetime.now()
+    file = timestamp.strftime('log_%H_%M_%d_%m_%Y_{}.log'.format(args.arch))
     log = pu.Logger()
     log.open(os.path.join(OUTPUT_LOG_PATH, file), mode='w')
 
@@ -35,12 +35,9 @@ def run_experiment(parser):
     rot_id = [args.rotation] if args.rotation else range(1,17)
 
     # Data augmentation
-    input_trans = transforms.Compose([transforms.Scale(args.im_size),
-                                      transforms.CenterCrop(args.im_size),
-                                      transforms.ToTensor()])
+    input_trans = transforms.Compose([transforms.ToTensor()])
 
-    mask_trans = transforms.Compose([transforms.Scale(args.im_size),
-                                     transforms.CenterCrop(args.im_size)])
+    mask_trans = None
 
     #split data set for training and valid
     train_ids, valid_ids = pu.train_valid_split(TRAIN_MASKS_CSV, rotation_ids=rot_id,
@@ -50,6 +47,7 @@ def run_experiment(parser):
     dset_train = CarvanaDataset(im_dir=TRAIN_IMG_PATH,
                                 ids_list=train_ids,
                                 mask_dir=TRAIN_MASKS_PATH,
+                                im_size=args.im_size,
                                 input_transforms=input_trans,
                                 mask_transforms=mask_trans,
                                 rotation_ids=rot_id,
@@ -58,6 +56,7 @@ def run_experiment(parser):
     dset_valid = CarvanaDataset(im_dir=TRAIN_IMG_PATH,
                                 ids_list=valid_ids,
                                 mask_dir=TRAIN_MASKS_PATH,
+                                im_size=args.im_size,
                                 input_transforms=input_trans,
                                 mask_transforms=mask_trans,
                                 rotation_ids=rot_id,
@@ -78,8 +77,20 @@ def run_experiment(parser):
     #---------------------------------------------------------------------------------#
 
     # --- TESTING --- #
+    dset_train_full = CarvanaDataset(im_dir=TRAIN_IMG_PATH,
+                                     input_transforms=input_trans,
+                                     im_size=args.im_size,
+                                     rotation_ids=rot_id,
+                                     debug=args.debug)
+    train_full_loader = DataLoader(dset_train_full,
+                                    batch_size=args.batch_size,
+                                    shuffle=False,
+                                    num_workers=args.workers,
+                                    pin_memory=GPU_AVAIL)
+
     dset_test = CarvanaDataset(im_dir=TEST_IMG_PATH,
                                input_transforms=input_trans,
+                               im_size=args.im_size,
                                rotation_ids=rot_id,
                                debug=args.debug)
     test_loader = DataLoader(dset_test,
@@ -88,16 +99,27 @@ def run_experiment(parser):
                              num_workers=args.workers,
                              pin_memory=GPU_AVAIL)
 
+    log.write('Predicting training data...\n')
+    train_idx, rle_encoded_predictions_train = mu.predict(model, train_full_loader, log)
+    log.write('Predicting test data...\n')
     test_idx, rle_encoded_predictions = mu.predict(model, test_loader, log)
-    output_file = os.path.join(OUTPUT_SUB_PATH, 'subm_{}_{:.5f}_{:.5f}.gz'
-                            .format(model.modelName, best_dice, best_loss))
-    pu.make_prediction_file(output_file, test_idx, rle_encoded_predictions)
-    # --------------------------------------------------------------------------------#
 
+
+    output_file_train = os.path.join(OUTPUT_SUB_PATH, 'train', 'TRAIN_{}_{:.5f}_{:.5f}.gz'
+                            .format(timestamp.strftime('%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice, best_loss))
+    output_file = os.path.join(OUTPUT_SUB_PATH, 'test', '{}_{:.5f}_{:.5f}.gz'
+                            .format(timestamp.strftime('%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice, best_loss))
+
+    log.write('Writing encoded csv files for training data..\n')
+    pu.make_prediction_file(output_file_train, train_idx, rle_encoded_predictions_train, train_data=True)
+    log.write('Writing encoded csv files for test data...\n')
+    pu.make_prediction_file(output_file, test_idx, rle_encoded_predictions)
+    log.write('Done!')
+    # --------------------------------------------------------------------------------#
 
 def main():
     prs = argparse.ArgumentParser(description='Kaggle: Carvana car segmentation challenge')
-    prs.add_argument('name', type=str, help='Name for the experiment')
+    prs.add_argument('message', default=' ', type=str, help='Message to describe experiment in spreadsheet')
     prs.add_argument('im_size', default=256, type=int, help='image size (default: 256)')
     prs.add_argument('arch', default='UNet', help='Model architecture ')
     prs.add_argument('epochs', default=30, type=int, help='Number of total epochs to run')

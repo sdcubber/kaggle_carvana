@@ -1,8 +1,7 @@
 # Model utility functions such as loss functions, CNN building blocks etc.
+from data.config import *
 from processing.processing_utils import AverageMeter
 import processing.processing_utils as pu
-
-from data.config import *
 import torchvision.transforms as transforms
 from torch.nn.modules.loss import _Loss
 
@@ -18,7 +17,7 @@ class DiceLoss(_Loss):
 
 
 def predict(model, test_loader, log=None):
-    """ Return the ids and their encoded predictions"""
+    """Make rle-encoded predictions on a set of data. Returns image ids and encoded predictions."""
 
     # switch to evaluate mode
     model.eval()
@@ -28,7 +27,7 @@ def predict(model, test_loader, log=None):
     rle_encoded_predictions = []
 
     # number of iterations before print outputs
-    print_iter = len(test_loader.dataset) // (10 * test_loader.batch_size)
+    print_iter = np.ceil(len(test_loader.dataset)/(10 * test_loader.batch_size))
     num_test = 0
 
     for batch_idx, (input, target, id) in enumerate(test_loader):
@@ -45,7 +44,7 @@ def predict(model, test_loader, log=None):
         np_list = [pu.upscale_test_img(img) for img in PIL_list]
 
         # rle encode the predictions
-        rle_encoded_predictions.append([pu.rle(im >= 0.5) for im in np_list])
+        rle_encoded_predictions.append([pu.rle(im > 0.5) for im in np_list])
         test_idx.append(id)
 
         # write to the log file
@@ -54,33 +53,6 @@ def predict(model, test_loader, log=None):
             log.write('Predicting {:>3.0f}%\n'.format(100*num_test/len(test_loader.dataset)))
 
     return test_idx, rle_encoded_predictions
-
-
-def evaluate(model, test_loader, criterion):
-    """ Return dice score and loss value """
-
-    # switch to evaluate mode
-    model.eval()
-
-    # define loss and dice recorder
-    losses = AverageMeter()
-    dices = AverageMeter()
-
-    for batch_idx, (input, target, id) in enumerate(test_loader):
-        # forward + backward + optimize
-        input_var = Variable(input.cuda() if GPU_AVAIL else input, volatile=True)
-        target_var = Variable(target.cuda() if GPU_AVAIL else target, volatile=True)
-
-        # compute output
-        output = model(input_var)
-        loss = criterion(output, target_var)
-
-        # measure dice and record loss
-        score = get_dice_score(output.data.cpu().numpy(), target.cpu().numpy())
-        dices.update(score, input.size(0))
-        losses.update(loss.data[0], input.size(0))
-
-    return dices.avg, losses.avg
 
 
 def train(train_loader, valid_loader, model, criterion, optimizer, args, log=None):
@@ -99,12 +71,6 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
         valid_dice, valid_loss = evaluate(model, valid_loader, criterion)
         log.write("valid_loss={:.5f}, valid_dice={:.5f} \n".format(valid_loss, valid_dice))
 
-        # saving state
-        checkpoint_file = os.path.join(OUTPUT_LOG_PATH, 'checkpoint_{}_{}_{}.pth.tar'
-                                    .format(model.modelName, epoch, valid_dice))
-        bestpoint_file = os.path.join(OUTPUT_LOG_PATH, 'modelbest_{}.pth.tar'
-                                   .format(model.modelName))
-
         # remember best dice and save checkpoint
         is_best = (valid_dice > best_dice) or \
                   (valid_dice == best_dice and valid_loss < best_loss)
@@ -112,28 +78,44 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
         best_dice = max(valid_dice, best_dice)
         best_loss = min(valid_loss, best_loss)
 
-        save_checkpoint({
-            'epoch': epoch + 1,
-            'arch': model.modelName,
-            'state_dict': model.state_dict(),
-            'best_dice': best_dice,
-            'best_loss': best_loss,
-            'optimizer': optimizer.state_dict(),
-        }, is_best, checkpoint_file, bestpoint_file)
+        # Save only the best state. Update each time the model improves
+        bestpoint_file = os.path.join(OUTPUT_WEIGHT_PATH, '{}_best_architecture.pth.tar'
+                                   .format(model.modelName))
+        best_weight_file = os.path.join(OUTPUT_WEIGHT_PATH, '{}_best_weights.torch'
+                                    .format(model.modelName))
+
+        if is_best: # Save only if it's the best model
+            log.write('Saving best model architecture...\n')
+            torch.save({
+                'epoch': epoch + 1,
+                'arch': model.modelName,
+                'state_dict': model.state_dict(),
+                'best_dice': best_dice,
+                'best_loss': best_loss,
+                'optimizer': optimizer.state_dict(),
+            }, bestpoint_file)
 
         # saving the best weights
         if is_best:
             log.write("Saving the best weights...\n")
-            torch.save(model, os.path.join(OUTPUT_WEIGHT_PATH, 'best_{}.torch'.format(model.modelName)))
+            torch.save(model, best_weight_file)
 
         log.write("----------------------------------------------------------\n")
 
     # load the best model
-    model = torch.load(os.path.join(OUTPUT_WEIGHT_PATH, 'best_{}.torch'.format(model.modelName)))
+    model = torch.load(os.path.join(OUTPUT_WEIGHT_PATH, '{}_best_weights.torch'.format(model.modelName)))
+
+    # Put best validation loss in the names of best architecture and best weight files
+    shutil.move(bestpoint_file, os.path.join(OUTPUT_WEIGHT_PATH, '{}_best_architecture_{}.pth.tar'
+                               .format(model.modelName, best_loss)))
+
+    shutil.move(best_weight_file, os.path.join(OUTPUT_WEIGHT_PATH, '{}_best_weights_{}.torch'
+                                .format(model.modelName, best_loss)))
 
     return best_dice, best_loss
 
 def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, log=None):
+    """Run one epoch of training."""
     # switch to train mode
     model.train()
 
@@ -142,7 +124,7 @@ def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, log=
     dices = AverageMeter()
 
     # number of iterations before print outputs
-    print_iter = len(train_loader.dataset) // (10 * train_loader.batch_size)
+    print_iter = np.ceil(len(train_loader.dataset) / (10 * train_loader.batch_size))
 
     for batch_idx, (input, target, id) in enumerate(train_loader):
 
@@ -158,7 +140,7 @@ def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, log=
         dices.update(score, input.size(0))
         losses.update(loss.data[0], input.size(0))
 
-        # compute gradient and do SGD step
+        # Zero gradients, compute gradients and do SGD step
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -171,11 +153,31 @@ def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, log=
                 losses.avg, dices.avg))
 
 
-def save_checkpoint(state, is_best, filename, best_filename):
-    torch.save(state, filename)
-    if is_best:
-        shutil.copyfile(filename, best_filename)
+def evaluate(model, data_loader, criterion):
+    """ Evaluate model on labeled data. Used for evaluating on validation data. """
 
+    # switch to evaluate mode
+    model.eval()
+
+    # define loss and dice recorder
+    losses = AverageMeter()
+    dices = AverageMeter()
+
+    for batch_idx, (input, target, id) in enumerate(data_loader):
+        # forward + backward + optimize
+        input_var = Variable(input.cuda() if GPU_AVAIL else input, volatile=True)
+        target_var = Variable(target.cuda() if GPU_AVAIL else target, volatile=True)
+
+        # compute output
+        output = model(input_var)
+        loss = criterion(output, target_var)
+
+        # measure dice and record loss
+        score = get_dice_score(output.data.cpu().numpy(), target.cpu().numpy())
+        dices.update(score, input.size(0))
+        losses.update(loss.data[0], input.size(0))
+
+    return dices.avg, losses.avg
 
 def load_checkpoint(args, model, optimizer, log=None):
     """

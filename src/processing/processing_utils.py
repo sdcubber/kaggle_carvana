@@ -5,12 +5,14 @@ from PIL import Image
 from data.config import *
 
 
-def make_prediction_file(output_file, test_ids, rle_encoded_preds):
+def make_prediction_file(output_file, test_ids, rle_encoded_preds, train_data=False):
     """
     Create a prediction file
-    :param output_file: the name of output file
-    :param test_ids: ids of test files
-    :param rle_encoded_preds: encoded strings
+    Args:
+    output_file: the name of output file
+    test_ids: ids of test files
+    rle_encoded_preds: encoded strings
+    train_data: if True, make submission file for the training data instead of test data
     """
     # Prepare submission file
     test_idx_all = [j + '.jpg' for batch in test_ids for j in batch]
@@ -18,28 +20,37 @@ def make_prediction_file(output_file, test_ids, rle_encoded_preds):
     predictions_mapping = dict(zip(test_idx_all, rle_encoded_predictions_all))
 
     # Map predictions to the sample submission file to make sure we make no errors with the ordering of files
-    submission_file = pd.read_csv(SAMPLE_SUB_CSV)
+    if train_data:
+        submission_file = pd.read_csv(TRAIN_MASKS_CSV)
+    else:
+        submission_file = pd.read_csv(SAMPLE_SUB_CSV)
+
     submission_file['rle_mask'] = submission_file['img'].map(predictions_mapping)
 
     submission_file.to_csv(output_file, index=False, compression='gzip')
 
 
-def upscale_test_img(pil_img):
+def upscale_test_img(pil_img, crop=False):
     """Upscale PIL Image to the shape of the test images.
     Args
     pil_img: PIL Image
-
+    crop: True if original images were centered cropped (requires different upscaling)
     Return np array of shape (1280,1918)"""
 
-    # Go to square of size (1280,1280) with bilinear interpolation
-    im = pil_img.resize((1280,1280), resample=Image.BILINEAR)
-    # Go to numpy
-    im = np.array(im)/255
+    if crop:
+        # Go to square of size (1280,1280) with bilinear interpolation
+        im = pil_img.resize((1280,1280), resample=Image.BILINEAR)
+        # Go to numpy
+        im = np.array(im) // 255
+        # Pad with zeros to a width of 1918
+        # See https://docs.scipy.org/doc/numpy/reference/generated/numpy.pad.html
+        n_padding = (1918 - 1280)// 2
+        im = np.pad(im,((0,0),(n_padding,n_padding)), 'constant', constant_values=(0))
 
-    # Pad with zeros to a width of 1918
-    # See https://docs.scipy.org/doc/numpy/reference/generated/numpy.pad.html
-    n_padding = (1918 - 1280)// 2
-    im = np.pad(im,((0,0),(n_padding,n_padding)), 'constant', constant_values=(0))
+    else:
+        # Go to original resolution by upscaling, no padding required since no cropping was done
+        im = pil_img.resize((1918,1280), resample=Image.ANTIALIAS)
+        im = np.array(im) // 255
 
     return(im)
 
@@ -82,7 +93,7 @@ def read_mask_image(car_code, angle_code):
     angle_code: code of the angle
     """
     mask_img_path = os.path.join(TRAIN_MASKS_PATH, car_code + '_' + angle_code + '_mask.gif')
-    mask_img = np.array(Image.open(mask_img_path).convert(mode='L'))
+    mask_img = np.array(Image.open(mask_img_path)) #.convert(mode='L'))
 
     return mask_img
 
@@ -116,6 +127,12 @@ def train_valid_split(csvfile, rotation_ids=range(1, 17), valid=0.1):
     t_size = int(im_list.shape[0] * (1-valid))
 
     return im_list[:t_size], im_list[t_size:]
+
+def update_spreadsheet(timestamp, im_size, arch, epochs, best_dice, best_loss, modelname, rotation):
+    """Update the spreadsheet with information from this experiment"""
+    # TODO
+
+    return(True)
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""

@@ -1,3 +1,10 @@
+TO-DO list
+============================
+- check if rle function is always correct
+
+
+
+
 kaggle_carvana
 ==============================
 

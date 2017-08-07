@@ -155,7 +155,7 @@ def evaluate(model, data_loader, criterion):
     losses = AverageMeter()
     dices = AverageMeter()
 
-    for batch_idx, (input, target, id) in enumerate(validation_loader):
+    for batch_idx, (input, target, id) in enumerate(data_loader):
         # forward + backward + optimize
         input_var = Variable(input.cuda() if GPU_AVAIL else input, volatile=True)
         target_var = Variable(target.cuda() if GPU_AVAIL else target, volatile=True)

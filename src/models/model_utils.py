@@ -145,7 +145,7 @@ def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, log=
                 losses.avg, dices.avg))
 
 
-    def evaluate(model, data_loader, criterion):
+def evaluate(model, data_loader, criterion):
     """ Evaluate model on labeled data. Used for evaluating on validation data. """
 
     # switch to evaluate mode

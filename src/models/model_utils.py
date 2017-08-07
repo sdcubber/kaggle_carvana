@@ -27,7 +27,7 @@ def predict(model, test_loader, log=None):
     rle_encoded_predictions = []
 
     # number of iterations before print outputs
-    print_iter = len(test_loader.dataset) // (10 * test_loader.batch_size)
+    np.ceil(print_iter = len(test_loader.dataset) / (10 * test_loader.batch_size))
     num_test = 0
 
     for batch_idx, (input, target, id) in enumerate(test_loader):

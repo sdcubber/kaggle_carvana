@@ -1,8 +1,7 @@
 # Model utility functions such as loss functions, CNN building blocks etc.
+from data.config import *
 from processing.processing_utils import AverageMeter
 import processing.processing_utils as pu
-
-from data.config import *
 import torchvision.transforms as transforms
 from torch.nn.modules.loss import _Loss
 
@@ -56,33 +55,6 @@ def predict(model, test_loader, log=None):
     return test_idx, rle_encoded_predictions
 
 
-def evaluate(model, test_loader, criterion):
-    """ Return dice score and loss value """
-
-    # switch to evaluate mode
-    model.eval()
-
-    # define loss and dice recorder
-    losses = AverageMeter()
-    dices = AverageMeter()
-
-    for batch_idx, (input, target, id) in enumerate(test_loader):
-        # forward + backward + optimize
-        input_var = Variable(input.cuda() if GPU_AVAIL else input, volatile=True)
-        target_var = Variable(target.cuda() if GPU_AVAIL else target, volatile=True)
-
-        # compute output
-        output = model(input_var)
-        loss = criterion(output, target_var)
-
-        # measure dice and record loss
-        score = get_dice_score(output.data.cpu().numpy(), target.cpu().numpy())
-        dices.update(score, input.size(0))
-        losses.update(loss.data[0], input.size(0))
-
-    return dices.avg, losses.avg
-
-
 def train(train_loader, valid_loader, model, criterion, optimizer, args, log=None):
     """ Training the model """
     # load the last run
@@ -99,7 +71,7 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
         valid_dice, valid_loss = evaluate(model, valid_loader, criterion)
         log.write("valid_loss={:.5f}, valid_dice={:.5f} \n".format(valid_loss, valid_dice))
 
-        # saving state
+        # Save only the best state. Update each time the model improves
         checkpoint_file = os.path.join(OUTPUT_LOG_PATH, 'checkpoint_{}_{}_{}.pth.tar'
                                     .format(model.modelName, epoch, valid_dice))
         bestpoint_file = os.path.join(OUTPUT_LOG_PATH, 'modelbest_{}.pth.tar'
@@ -112,14 +84,15 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
         best_dice = max(valid_dice, best_dice)
         best_loss = min(valid_loss, best_loss)
 
-        save_checkpoint({
-            'epoch': epoch + 1,
-            'arch': model.modelName,
-            'state_dict': model.state_dict(),
-            'best_dice': best_dice,
-            'best_loss': best_loss,
-            'optimizer': optimizer.state_dict(),
-        }, is_best, checkpoint_file, bestpoint_file)
+        if is_best: # Save only if it's the best model
+            save_checkpoint({
+                'epoch': epoch + 1,
+                'arch': model.modelName,
+                'state_dict': model.state_dict(),
+                'best_dice': best_dice,
+                'best_loss': best_loss,
+                'optimizer': optimizer.state_dict(),
+            }, is_best, checkpoint_file, bestpoint_file)
 
         # saving the best weights
         if is_best:
@@ -134,6 +107,7 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
     return best_dice, best_loss
 
 def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, log=None):
+    """Run one epoc of training."""
     # switch to train mode
     model.train()
 
@@ -158,7 +132,7 @@ def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, log=
         dices.update(score, input.size(0))
         losses.update(loss.data[0], input.size(0))
 
-        # compute gradient and do SGD step
+        # Zero gradients, compute gradients and do SGD step
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -169,6 +143,33 @@ def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, log=
                 epoch + 1, num_epochs,
                 100 * losses.count / len(train_loader.dataset),
                 losses.avg, dices.avg))
+
+
+    def evaluate(model, data_loader, criterion):
+    """ Evaluate model on labeled data. Used for evaluating on validation data. """
+
+    # switch to evaluate mode
+    model.eval()
+
+    # define loss and dice recorder
+    losses = AverageMeter()
+    dices = AverageMeter()
+
+    for batch_idx, (input, target, id) in enumerate(validation_loader):
+        # forward + backward + optimize
+        input_var = Variable(input.cuda() if GPU_AVAIL else input, volatile=True)
+        target_var = Variable(target.cuda() if GPU_AVAIL else target, volatile=True)
+
+        # compute output
+        output = model(input_var)
+        loss = criterion(output, target_var)
+
+        # measure dice and record loss
+        score = get_dice_score(output.data.cpu().numpy(), target.cpu().numpy())
+        dices.update(score, input.size(0))
+        losses.update(loss.data[0], input.size(0))
+
+    return dices.avg, losses.avg
 
 
 def save_checkpoint(state, is_best, filename, best_filename):

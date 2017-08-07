@@ -8,9 +8,10 @@ from data.config import *
 def make_prediction_file(output_file, test_ids, rle_encoded_preds):
     """
     Create a prediction file
-    :param output_file: the name of output file
-    :param test_ids: ids of test files
-    :param rle_encoded_preds: encoded strings
+    Args:
+    output_file: the name of output file
+    test_ids: ids of test files
+    rle_encoded_preds: encoded strings
     """
     # Prepare submission file
     test_idx_all = [j + '.jpg' for batch in test_ids for j in batch]

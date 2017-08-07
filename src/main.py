@@ -10,7 +10,7 @@ import torchvision.transforms as transforms
 
 def run_experiment(parser):
     args = parser.parse_args()
-    timetamp = datetime.now()
+    timestamp = datetime.now()
     file = timestamp.strftime('log_%H_%M_%d_%m_%Y_{}.log'.format(args.arch))
     log = pu.Logger()
     log.open(os.path.join(OUTPUT_LOG_PATH, file), mode='w')
@@ -106,9 +106,9 @@ def run_experiment(parser):
     log.write('Writing encoded csv files...\n')
 
     output_file_train = os.path.join(OUTPUT_SUB_PATH, 'train', 'TRAIN_{}_{:.5f}_{:.5f}.gz'
-                            .format(timestamp.strftime('log_%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice, best_loss))
+                            .format(timestamp.strftime('%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice, best_loss))
     output_file = os.path.join(OUTPUT_SUB_PATH, 'test', '{}_{:.5f}_{:.5f}.gz'
-                            .format(timestamp.strftime('log_%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice, best_loss))
+                            .format(timestamp.strftime('%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice, best_loss))
 
     pu.make_prediction_file(output_file_train, train_ids, rle_encoded_predictions_train, train_data=True)
     pu.make_prediction_file(output_file, test_idx, rle_encoded_predictions)
@@ -119,7 +119,7 @@ def run_experiment(parser):
 
 def main():
     prs = argparse.ArgumentParser(description='Kaggle: Carvana car segmentation challenge')
-    prs.add_argument('message', default=' ' type=str, help='Message to describe experiment in spreadsheet')
+    prs.add_argument('message', default=' ', type=str, help='Message to describe experiment in spreadsheet')
     prs.add_argument('im_size', default=256, type=int, help='image size (default: 256)')
     prs.add_argument('arch', default='UNet', help='Model architecture ')
     prs.add_argument('epochs', default=30, type=int, help='Number of total epochs to run')

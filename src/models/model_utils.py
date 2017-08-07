@@ -71,12 +71,6 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
         valid_dice, valid_loss = evaluate(model, valid_loader, criterion)
         log.write("valid_loss={:.5f}, valid_dice={:.5f} \n".format(valid_loss, valid_dice))
 
-        # Save only the best state. Update each time the model improves
-        checkpoint_file = os.path.join(OUTPUT_WEIGHT_PATH, 'checkpoint_{}_{}_{}.pth.tar'
-                                    .format(model.modelName))
-        bestpoint_file = os.path.join(OUTPUT_WEIGHT_PATH, 'modelbest_{}.pth.tar'
-                                   .format(model.modelName, epoch, valid_dice))
-
         # remember best dice and save checkpoint
         is_best = (valid_dice > best_dice) or \
                   (valid_dice == best_dice and valid_loss < best_loss)
@@ -84,7 +78,14 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
         best_dice = max(valid_dice, best_dice)
         best_loss = min(valid_loss, best_loss)
 
+        # Save only the best state. Update each time the model improves
+        bestpoint_file = os.path.join(OUTPUT_WEIGHT_PATH, '{}_best_architecture.pth.tar'
+                                   .format(model.modelName))
+        best_weight_file = os.path.join(OUTPUT_WEIGHT_PATH, '{}_best_weights.torch'
+                                    .format(model.modelName))
+
         if is_best: # Save only if it's the best model
+            log.write('Saving best model architecture...\n')
             save_checkpoint({
                 'epoch': epoch + 1,
                 'arch': model.modelName,
@@ -92,17 +93,24 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
                 'best_dice': best_dice,
                 'best_loss': best_loss,
                 'optimizer': optimizer.state_dict(),
-            }, is_best, checkpoint_file, bestpoint_file)
+            }, bestpoint_file)
 
         # saving the best weights
         if is_best:
             log.write("Saving the best weights...\n")
-            torch.save(model, os.path.join(OUTPUT_WEIGHT_PATH, 'best_{}.torch'.format(model.modelName)))
+            torch.save(model, best_weight_file)
 
         log.write("----------------------------------------------------------\n")
 
     # load the best model
-    model = torch.load(os.path.join(OUTPUT_WEIGHT_PATH, 'best_{}.torch'.format(model.modelName)))
+    model = torch.load(os.path.join(OUTPUT_WEIGHT_PATH, '{}_best_weights.torch'.format(model.modelName)))
+
+    # Put best validation loss in the names of best architecture and best weight files
+    shutil.move(bestpoint_file, os.path.join(OUTPUT_WEIGHT_PATH, '{}_best_architecture_{}.pth.tar'
+                               .format(model.modelName, best_loss)))
+
+    shutil.move(best_weight_file, os.path.join(OUTPUT_WEIGHT_PATH, '{}_best_weights_{}.torch'
+                                .format(model.modelName, best_loss)))
 
     return best_dice, best_loss
 
@@ -173,9 +181,7 @@ def evaluate(model, data_loader, criterion):
 
 
 def save_checkpoint(state, is_best, filename, best_filename):
-    torch.save(state, filename)
-    if is_best:
-        shutil.copyfile(filename, best_filename)
+    torch.save(state, best_filename)
 
 
 def load_checkpoint(args, model, optimizer, log=None):

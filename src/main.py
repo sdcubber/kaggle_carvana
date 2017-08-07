@@ -89,7 +89,7 @@ def run_experiment(parser):
                              pin_memory=GPU_AVAIL)
 
     test_idx, rle_encoded_predictions = mu.predict(model, test_loader, log)
-    output_file = os.path.join(OUTPUT_SUB_PATH, 'subm_{}_{:.5f}_{:.5f}.gz'
+    output_file = os.path.join(OUTPUT_SUB_PATH, 'test', 'subm_{}_{:.5f}_{:.5f}.gz'
                             .format(model.modelName, best_dice, best_loss))
     pu.make_prediction_file(output_file, test_idx, rle_encoded_predictions)
     # --------------------------------------------------------------------------------#

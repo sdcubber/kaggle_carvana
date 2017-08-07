@@ -9,9 +9,13 @@ source activate pytorch
 cd ../src
 
 # run main script
-python main.py 128 UNet_128 30 -b 32
+# The message variable is not used for now (will be used to update spreadsheet later)
+# Variable order: message im_size architecture epochs
 
-source deactivate 
+MESSAGE='foo'
+python main.py $MESSAGE 128 UNet_128 30 -b 32 
+
+source deactivate
 
 # Copy log file to dropbox
 cd ../logs

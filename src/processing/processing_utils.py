@@ -44,9 +44,9 @@ def upscale_test_img(pil_img, crop=False):
 
     else:
         # Go to original resolution by upscaling, no padding required since no cropping was done
-        im = pil.img.resize((1280,1918), resample=Image.BILINEAR)
+        im = pil_img.resize((1280,1918), resample=Image.BILINEAR)
         im = np.array(im)/255
-    
+
     return(im)
 
 def rle(img):

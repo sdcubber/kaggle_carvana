@@ -10,7 +10,6 @@ class CarvanaDataset(Dataset):
     def __init__(self, im_dir,
                  ids_list=None,
                  mask_dir=None,
-                 im_size=128,
                  input_transforms=None,
                  mask_transforms=None,
                  rotation_ids=range(1, 17),
@@ -28,7 +27,6 @@ class CarvanaDataset(Dataset):
         """
         self.im_dir = im_dir
         self.mask_dir = mask_dir
-        self.im_size = im_size
 
         if ids_list is None:
             ids_list = os.listdir(im_dir)
@@ -47,23 +45,19 @@ class CarvanaDataset(Dataset):
     def __getitem__(self, idx):
         im_name = self.im_list[idx]
         image = Image.open(os.path.join(self.im_dir, im_name + '.jpg'))
-        image = image.resize((self.im_size, self.im_size))
         mask = 0
 
         if self.input_transforms:
             image = self.input_transforms(image)
 
         if self.mask_dir:
-            mask = Image.open(os.path.join(self.mask_dir, im_name + '_mask.gif'))  # .convert(mode='L')
-            mask  = mask.resize((self.im_size, self.im_size))
-
+            mask = Image.open(os.path.join(self.mask_dir, im_name + '_mask.gif'))
             if self.mask_transforms:
                 mask = self.mask_transforms(mask)
-
             mask = np.array(mask, np.float32).reshape(1, mask.size[0], mask.size[1])
             mask = torch.from_numpy(mask) # To_Tensor is done with the transforms
 
-        return image, mask, im_name #it should be faster than a map
+        return image, mask, im_name
 
     def __len__(self):
         return len(self.im_list)

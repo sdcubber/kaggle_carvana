@@ -7,6 +7,8 @@ from data.data_utils import CarvanaDataset
 
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
+from PIL import Image
+
 
 def run_experiment(parser):
     args = parser.parse_args()
@@ -32,22 +34,26 @@ def run_experiment(parser):
     # --- TRAINING --- #
 
     # Type of car rotations
-    rot_id = [args.rotation] if args.rotation else range(1,17)
+    rot_id = [args.rotation] if args.rotation else range(1, 17)
 
     # Data augmentation
-    input_trans = transforms.Compose([transforms.ToTensor()])
+    input_trans = transforms.Compose([
+        transforms.Lambda(lambda x: x.resize((args.im_size, args.im_size), Image.ANTIALIAS)),
+        transforms.ToTensor()
+    ])
 
-    mask_trans = None
+    mask_trans = transforms.Compose([
+        transforms.Lambda(lambda x: x.resize((args.im_size, args.im_size), Image.ANTIALIAS)),
+    ])
 
-    #split data set for training and valid
+    # split data set for training and valid
     train_ids, valid_ids = pu.train_valid_split(TRAIN_MASKS_CSV, rotation_ids=rot_id,
-                                             valid=args.valid_size)
+                                                valid=args.valid_size)
 
-    #preparing data flow for training the network
+    # preparing data flow for training the network
     dset_train = CarvanaDataset(im_dir=TRAIN_IMG_PATH,
                                 ids_list=train_ids,
                                 mask_dir=TRAIN_MASKS_PATH,
-                                im_size=args.im_size,
                                 input_transforms=input_trans,
                                 mask_transforms=mask_trans,
                                 rotation_ids=rot_id,
@@ -56,7 +62,6 @@ def run_experiment(parser):
     dset_valid = CarvanaDataset(im_dir=TRAIN_IMG_PATH,
                                 ids_list=valid_ids,
                                 mask_dir=TRAIN_MASKS_PATH,
-                                im_size=args.im_size,
                                 input_transforms=input_trans,
                                 mask_transforms=mask_trans,
                                 rotation_ids=rot_id,
@@ -74,23 +79,21 @@ def run_experiment(parser):
                               pin_memory=GPU_AVAIL)
 
     best_dice, best_loss = mu.train(train_loader, valid_loader, model, criterion, optimizer, args, log)
-    #---------------------------------------------------------------------------------#
+    # ---------------------------------------------------------------------------------#
 
     # --- TESTING --- #
     dset_train_full = CarvanaDataset(im_dir=TRAIN_IMG_PATH,
                                      input_transforms=input_trans,
-                                     im_size=args.im_size,
                                      rotation_ids=rot_id,
                                      debug=args.debug)
     train_full_loader = DataLoader(dset_train_full,
-                                    batch_size=args.batch_size,
-                                    shuffle=False,
-                                    num_workers=args.workers,
-                                    pin_memory=GPU_AVAIL)
+                                   batch_size=args.batch_size,
+                                   shuffle=False,
+                                   num_workers=args.workers,
+                                   pin_memory=GPU_AVAIL)
 
     dset_test = CarvanaDataset(im_dir=TEST_IMG_PATH,
                                input_transforms=input_trans,
-                               im_size=args.im_size,
                                rotation_ids=rot_id,
                                debug=args.debug)
     test_loader = DataLoader(dset_test,
@@ -104,18 +107,19 @@ def run_experiment(parser):
     log.write('Predicting test data...\n')
     test_idx, rle_encoded_predictions = mu.predict(model, test_loader, log)
 
-
     output_file_train = os.path.join(OUTPUT_SUB_PATH, 'train', 'TRAIN_{}_{:.5f}_{:.5f}.gz'
-                            .format(timestamp.strftime('%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice, best_loss))
+                                     .format(timestamp.strftime('%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice,
+                                             best_loss))
     output_file = os.path.join(OUTPUT_SUB_PATH, 'test', '{}_{:.5f}_{:.5f}.gz'
-                            .format(timestamp.strftime('%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice, best_loss))
+                               .format(timestamp.strftime('%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice, best_loss))
 
     log.write('Writing encoded csv files for training data..\n')
-    pu.make_prediction_file(output_file_train, train_idx, rle_encoded_predictions_train, train_data=True)
+    pu.make_prediction_file(output_file_train, TRAIN_MASKS_CSV, train_idx, rle_encoded_predictions_train)
     log.write('Writing encoded csv files for test data...\n')
-    pu.make_prediction_file(output_file, test_idx, rle_encoded_predictions)
+    pu.make_prediction_file(output_file, SAMPLE_SUB_CSV, test_idx, rle_encoded_predictions)
     log.write('Done!')
     # --------------------------------------------------------------------------------#
+
 
 def main():
     prs = argparse.ArgumentParser(description='Kaggle: Carvana car segmentation challenge')
@@ -135,6 +139,7 @@ def main():
     prs.add_argument('-db', '--debug', action='store_true', help='Debug mode.')
 
     run_experiment(prs)
+
 
 if __name__ == '__main__':
     # random.seed(123456789) # Fix seed

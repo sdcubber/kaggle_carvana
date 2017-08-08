@@ -5,7 +5,7 @@ from PIL import Image
 from data.config import *
 
 
-def make_prediction_file(output_file, test_ids, rle_encoded_preds, train_data=False):
+def make_prediction_file(output_file, sample_file, test_ids, rle_encoded_preds, train_data=False):
     """
     Create a prediction file
     Args:
@@ -14,19 +14,13 @@ def make_prediction_file(output_file, test_ids, rle_encoded_preds, train_data=Fa
     rle_encoded_preds: encoded strings
     train_data: if True, make submission file for the training data instead of test data
     """
+
     # Prepare submission file
-    test_idx_all = [j + '.jpg' for batch in test_ids for j in batch]
-    rle_encoded_predictions_all = [j for batch in rle_encoded_preds for j in batch]
-    predictions_mapping = dict(zip(test_idx_all, rle_encoded_predictions_all))
+    predictions_mapping = dict(zip([j + '.jpg' for j in test_ids], rle_encoded_preds))
 
     # Map predictions to the sample submission file to make sure we make no errors with the ordering of files
-    if train_data:
-        submission_file = pd.read_csv(TRAIN_MASKS_CSV)
-    else:
-        submission_file = pd.read_csv(SAMPLE_SUB_CSV)
-
+    submission_file = pd.read_csv(sample_file)
     submission_file['rle_mask'] = submission_file['img'].map(predictions_mapping)
-
     submission_file.to_csv(output_file, index=False, compression='gzip')
 
 

@@ -28,3 +28,6 @@ META_DATA_CSV = os.path.join(INPUT_PATH, 'metadata.csv')
 
 # Check if there is a GPU available
 GPU_AVAIL = torch.cuda.is_available()
+
+#threshold used for prediction
+THRED = 0.5

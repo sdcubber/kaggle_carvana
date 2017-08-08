@@ -4,6 +4,7 @@ from processing.processing_utils import AverageMeter
 import processing.processing_utils as pu
 import torchvision.transforms as transforms
 from torch.nn.modules.loss import _Loss
+from PIL import Image
 
 
 # --- Custom loss functions --- #
@@ -37,15 +38,16 @@ def predict(model, test_loader, log=None):
         # compute output
         output = model(input_var)
 
-        # Go from pytorch tensor to list of PIL images, which can be rescaled and interpolated
-        PIL_list = [transforms.ToPILImage()(output.data[b].cpu()) for b in range(input.size(0))]
+        # Go from numpy to list of PIL images
+        img_list = [np.squeeze(output.data[b].cpu().numpy()) for b in range(input.size(0))]
+        img_list = [Image.fromarray((item > THRED).astype(np.uint8)) for item in img_list]
 
-        # Rescale them to np matrices with the correct size
-        np_list = [pu.upscale_test_img(img) for img in PIL_list]
+        # Upscale image to the original size
+        img_list = [item.resize((1918,1280), Image.ANTIALIAS) for item in img_list]
 
         # rle encode the predictions
-        rle_encoded_predictions.append([pu.rle(im > 0.5) for im in np_list])
-        test_idx.append(id)
+        rle_encoded_predictions.extend([pu.rle(np.array(item)) for item in img_list])
+        test_idx.extend(id)
 
         # write to the log file
         num_test += input.size(0)
@@ -136,7 +138,7 @@ def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, log=
         loss = criterion(output, target_var)
 
         # measure dice and record loss
-        score = get_dice_score(output.data.cpu().numpy(), target.cpu().numpy())
+        score = get_dice_score(output.data.cpu().numpy(), target.cpu().numpy(), THRED)
         dices.update(score, input.size(0))
         losses.update(loss.data[0], input.size(0))
 
@@ -173,7 +175,7 @@ def evaluate(model, data_loader, criterion):
         loss = criterion(output, target_var)
 
         # measure dice and record loss
-        score = get_dice_score(output.data.cpu().numpy(), target.cpu().numpy())
+        score = get_dice_score(output.data.cpu().numpy(), target.cpu().numpy(), THRED)
         dices.update(score, input.size(0))
         losses.update(loss.data[0], input.size(0))
 
@@ -230,7 +232,7 @@ def dice(im1, im2, empty_score=1.0):
 def get_dice_score(avg_masks, train_masks, thr=0.5):
     """Return dice score"""
     score = 0.0
-    predict_masks = avg_masks >= thr
+    predict_masks = avg_masks > thr
 
     for i in range(train_masks.shape[0]):
         score += dice(train_masks[i], predict_masks[i])

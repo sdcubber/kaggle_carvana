@@ -46,7 +46,8 @@ def predict(model, test_loader, log=None):
         img_list = [item.resize((1918,1280), Image.ANTIALIAS) for item in img_list]
 
         # rle encode the predictions
-        rle_encoded_predictions.extend([pu.rle(np.array(item)) for item in img_list])
+        # use the code from kaggle, until our own code is faster
+        rle_encoded_predictions.extend([pu.rle_encode(np.array(item)) for item in img_list])
         test_idx.extend(id)
 
         # write to the log file

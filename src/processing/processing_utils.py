@@ -67,6 +67,22 @@ def rle(img):
 
     return ' '.join(str(x) for x in runs)
 
+
+def rle_new(img):
+
+    pixels = img.flatten()
+
+    b = np.array([1, 1] if pixels[0] else []).astype(np.int64)
+    e = np.array([len(pixels), 1] if pixels[-1] else []).astype(np.int64)
+
+    pixels[0], pixels[-1] = 0, 0
+    runs = np.where(pixels[1:] != pixels[:-1])[0] + 2
+    runs[1::2] = runs[1::2] - runs[:-1:2]
+
+    runs = np.concatenate([b, runs, e])
+
+    return ' '.join(str(x) for x in runs)
+
 def rle_encode(mask_image):
     pixels = mask_image.flatten()
     # We avoid issues with '1' at the start or end (at the corners of
@@ -77,7 +93,8 @@ def rle_encode(mask_image):
     pixels[-1] = 0
     runs = np.where(pixels[1:] != pixels[:-1])[0] + 2
     runs[1::2] = runs[1::2] - runs[:-1:2]
-    return runs
+
+    return ' '.join(str(x) for x in runs)
 
 
 def rle_decode(im_rle, shape=(1280, 1918)):

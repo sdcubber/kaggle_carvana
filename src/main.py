@@ -20,7 +20,7 @@ def run_experiment(parser):
     log.write(str(args) + "\n")
 
     # define loss function (criterion) and optimizer
-    criterion = nn.BCELoss()
+    criterion = nn.BCELoss() + mu.DiceLoss()
     model = mo.UNet128(args.arch)
     optimizer = torch.optim.SGD(model.parameters(),
                                 lr=args.lr,

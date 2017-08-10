@@ -1,5 +1,6 @@
 from data.config import *
 # custom modules
+import time
 import models.models as mo
 import models.model_utils as mu
 import processing.processing_utils as pu
@@ -78,7 +79,11 @@ def run_experiment(parser):
                               num_workers=args.workers,
                               pin_memory=GPU_AVAIL)
 
+    start_time = time.time()
     best_dice, best_loss = mu.train(train_loader, valid_loader, model, criterion, optimizer, args, log)
+    elapsed_time = time.time() - start_time
+    print('Elapsed time for training: {} minutes'.format(np.round(elapsed_time/60, 2)))
+    print('Time per epoch: {} seconds'.format(elapsed_time/args.epochs))
     # ---------------------------------------------------------------------------------#
 
     # --- TESTING --- #
@@ -118,6 +123,8 @@ def run_experiment(parser):
     log.write('Writing encoded csv files for test data...\n')
     pu.make_prediction_file(output_file, SAMPLE_SUB_CSV, test_idx, rle_encoded_predictions)
     log.write('Done!')
+
+
     # --------------------------------------------------------------------------------#
 
 

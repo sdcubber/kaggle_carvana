@@ -20,7 +20,7 @@ def run_experiment(parser):
     log.write(str(args) + "\n")
 
     # define loss function (criterion) and optimizer
-    criterion = mu.DiceLoss()
+    criterion = mu.BCELoss2D()
     model = mo.UNet128(args.arch)
     optimizer = torch.optim.SGD(model.parameters(),
                                 lr=args.lr,
@@ -57,6 +57,7 @@ def run_experiment(parser):
                                 input_transforms=input_trans,
                                 mask_transforms=mask_trans,
                                 rotation_ids=rot_id,
+                                weighted=args.weighted,
                                 debug=args.debug)
 
     dset_valid = CarvanaDataset(im_dir=TRAIN_IMG_PATH,
@@ -65,6 +66,7 @@ def run_experiment(parser):
                                 input_transforms=input_trans,
                                 mask_transforms=mask_trans,
                                 rotation_ids=rot_id,
+                                weighted=args.weighted,
                                 debug=args.debug)
 
     train_loader = DataLoader(dset_train,
@@ -137,7 +139,7 @@ def main():
     prs.add_argument('--weight_decay', '--wd', default=1e-4, type=float, metavar='W', help='weight decay (default: 1e-4)')
     prs.add_argument('--resume', default='', type=str, metavar='PATH', help='Path to latest checkpoint (default: none)')
     prs.add_argument('-db', '--debug', action='store_true', help='Debug mode.')
-
+    prs.add_argument('-we', '--weighted', action='store_true', help='Use weighted loss.')
     run_experiment(prs)
 
 

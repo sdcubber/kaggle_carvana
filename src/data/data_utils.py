@@ -1,6 +1,7 @@
 import os
 from torch.utils.data import Dataset
 from PIL import Image
+import processing.processing_utils as pu
 from data.config import *
 
 
@@ -13,6 +14,7 @@ class CarvanaDataset(Dataset):
                  input_transforms=None,
                  mask_transforms=None,
                  rotation_ids=range(1, 17),
+                 weighted=False,
                  debug=False):
         """
         Args:
@@ -23,10 +25,12 @@ class CarvanaDataset(Dataset):
         input_transforms: transforms only on input images
         mask_transforms: transforms on input and output images
         rotation_ids (list [1-16]): containing types of rotations that we are interested
+        weighted: if we used weights for each pixel
         debug (boolean): In debug mode, use only 100 images
         """
         self.im_dir = im_dir
         self.mask_dir = mask_dir
+        self.weighted = weighted
 
         if ids_list is None:
             ids_list = os.listdir(im_dir)
@@ -46,18 +50,27 @@ class CarvanaDataset(Dataset):
         im_name = self.im_list[idx]
         image = Image.open(os.path.join(self.im_dir, im_name + '.jpg'))
         mask = 0
+        weight = 1
 
         if self.input_transforms:
             image = self.input_transforms(image)
 
         if self.mask_dir:
             mask = Image.open(os.path.join(self.mask_dir, im_name + '_mask.gif'))
+
+            # applying transforms
             if self.mask_transforms:
                 mask = self.mask_transforms(mask)
-            mask = np.array(mask, np.float32).reshape(1, mask.size[0], mask.size[1])
-            mask = torch.from_numpy(mask) # To_Tensor is done with the transforms
 
-        return image, mask, im_name
+            if self.weighted:
+                weight = pu.compute_weight(np.array(mask).astype(np.uint8))
+                weight = weight.reshape(1, weight.shape[0], weight.shape[1])
+                weight = torch.from_numpy(weight.astype(np.float32))
+
+            mask = np.array(mask, np.float32).reshape(1, mask.size[0], mask.size[1])
+            mask = torch.from_numpy(mask)
+
+        return image, mask, weight, im_name
 
     def __len__(self):
         return len(self.im_list)

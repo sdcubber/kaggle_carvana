@@ -32,17 +32,13 @@ cd ../src
 # The message variable is not used for now (will be used to update spreadsheet later)
 # Variable order: message im_size architecture epochs
 
-MESSAGE='foo'
+MESSAGE='weigted_loss_test'
 
-python main.py $MESSAGE 512 UNet_128_512_50epochs 50 -b 4 
+python main.py $MESSAGE 512 UNet_128_512_50epochs 30 -b 4 -we
 
 dropbox_log
 dropbox_predictions
 
-#python main.py $MESSAGE 512 UNet_128_512 30 -b 4 
-
-#dropbox_log
-#dropbox_predictions
 
 cd ../jobscripts
 

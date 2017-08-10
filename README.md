@@ -1,5 +1,6 @@
 TO-DO list
 ============================
+- change the loss function according to edged pixels
 - check if rle function is always correct
 - check if torch.transforms.Scale does the same as PIL.Image.resize
 

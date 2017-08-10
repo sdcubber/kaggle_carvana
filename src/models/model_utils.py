@@ -3,7 +3,7 @@ from data.config import *
 from processing.processing_utils import AverageMeter
 import processing.processing_utils as pu
 import torchvision.transforms as transforms
-from torch.nn.modules.loss import _Loss
+from torch.nn.modules.loss import _Loss, _WeightedLoss
 from PIL import Image
 
 
@@ -14,7 +14,17 @@ class DiceLoss(_Loss):
 
     def forward(self, input, target):
         return 1 - torch.mean(2 * torch.sum(input * target, 1) \
-                                / (torch.sum(input, 1) + torch.sum(target,1))) + F.binary_cross_entropy(input, target)
+                                / (torch.sum(input, 1) + torch.sum(target,1))) \
+               + F.binary_cross_entropy(input, target)
+
+
+class BCELoss2D(_WeightedLoss):
+    def __init__(self):
+        super(BCELoss2D, self).__init__()
+        self.bce = nn.BCELoss()
+
+    def forward(self, input, target):
+        return self.bce(input.view(-1), target.view(-1))
 
 
 def predict(model, test_loader, log=None):
@@ -31,7 +41,7 @@ def predict(model, test_loader, log=None):
     print_iter = np.ceil(len(test_loader.dataset)/(10 * test_loader.batch_size))
     num_test = 0
 
-    for batch_idx, (input, target, id) in enumerate(test_loader):
+    for batch_idx, (input, target, weight, id) in enumerate(test_loader):
         # forward + backward + optimize
         input_var = Variable(input.cuda() if GPU_AVAIL else input, volatile=True)
 
@@ -129,13 +139,15 @@ def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, log=
     # number of iterations before print outputs
     print_iter = np.ceil(len(train_loader.dataset) / (10 * train_loader.batch_size))
 
-    for batch_idx, (input, target, id) in enumerate(train_loader):
+    for batch_idx, (input, target, weight, id) in enumerate(train_loader):
 
         input_var = Variable(input.cuda() if GPU_AVAIL else input)
         target_var = Variable(target.cuda() if GPU_AVAIL else target)
 
         # compute output
         output = model(input_var)
+        if train_loader.dataset.weighted:
+            criterion.bce.weight = weight.view(-1)
         loss = criterion(output, target_var)
 
         # measure dice and record loss
@@ -166,13 +178,15 @@ def evaluate(model, data_loader, criterion):
     losses = AverageMeter()
     dices = AverageMeter()
 
-    for batch_idx, (input, target, id) in enumerate(data_loader):
+    for batch_idx, (input, target, weight, id) in enumerate(data_loader):
         # forward + backward + optimize
         input_var = Variable(input.cuda() if GPU_AVAIL else input, volatile=True)
         target_var = Variable(target.cuda() if GPU_AVAIL else target, volatile=True)
 
         # compute output
         output = model(input_var)
+        if data_loader.dataset.weighted:
+            criterion.bce.weight = weight.view(-1)
         loss = criterion(output, target_var)
 
         # measure dice and record loss

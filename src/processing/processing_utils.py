@@ -1,6 +1,7 @@
 # Script for postprocessing functions, like making a submission file etc.
 
 import numpy as np
+from collections import deque
 from PIL import Image
 from data.config import *
 
@@ -49,49 +50,49 @@ def upscale_test_img(pil_img, crop=False):
     return (im)
 
 
-def rle(img):
+def compute_weight(mask, wc=1, wo=5, sigma=5):
+    """
+    Compute weights for all pixels
+    mask: a numpy array of pixels
+    Return a numpy weight array for each pixel in img_mask 
+    """
+    img_mask = mask.tolist()
+    moves = [(-1, 0), (1, 0), (0, 1), (0, -1)]
+    (w, h) = mask.shape
+    Q = deque()
+    weights = [[-1 for j in range(h)] for i in range(w)]
+
+    # finding pixels in border
+    for i in range(w):
+        for j in range(h):
+            is_border = False
+            for k in range(4):
+                x, y = i + moves[k][0], j + moves[k][1]
+                if 0 <= x < w and 0 <= y < h:
+                    is_border |= img_mask[i][j] != img_mask[x][y]
+            if is_border:
+                Q.append((i, j, 0))
+                weights[i][j] = wc + wo
+
+    # compute distance
+    while Q:
+        (i, j, d) = Q.popleft()
+        for k in range(4):
+            x, y = i + moves[k][0], j + moves[k][1]
+            if 0 <= x < w and 0<= y < h and weights[x][y] < 0:
+                weights[x][y] = wc + wo*math.exp(-((d + 1)/sigma)**2)
+                Q.append((x, y, d + 1))
+
+    return np.array(weights)
+
+
+def rle_encode(mask_image):
     """
     img: numpy array, 1 - mask, 0 - background
     Returns run length as string formated
     """
-    pixels = img.flatten()
-    i, n = 0, len(pixels)
-    runs = []
-
-    while i < n:
-        while i < n and pixels[i] == 0: i += 1
-        b = i
-        while i < n and pixels[i] == 1: i += 1
-        if b != i:
-            runs.extend([b + 1, i - b])
-
-    return ' '.join(str(x) for x in runs)
-
-
-def rle_new(img):
-
-    pixels = img.flatten()
-
-    b = np.array([1, 1] if pixels[0] else []).astype(np.int64)
-    e = np.array([len(pixels), 1] if pixels[-1] else []).astype(np.int64)
-
-    pixels[0], pixels[-1] = 0, 0
-    runs = np.where(pixels[1:] != pixels[:-1])[0] + 2
-    runs[1::2] = runs[1::2] - runs[:-1:2]
-
-    runs = np.concatenate([b, runs, e])
-
-    return ' '.join(str(x) for x in runs)
-
-def rle_encode(mask_image):
-    pixels = mask_image.flatten()
-    # We avoid issues with '1' at the start or end (at the corners of
-    # the original image) by setting those pixels to '0' explicitly.
-    # We do not expect these to be non-zero for an accurate mask,
-    # so this should not harm the score.
-    pixels[0] = 0
-    pixels[-1] = 0
-    runs = np.where(pixels[1:] != pixels[:-1])[0] + 2
+    pixels = np.append(np.append(0, mask_image.flatten()), 0)
+    runs = np.where(pixels[1:] != pixels[:-1])[0] + 1
     runs[1::2] = runs[1::2] - runs[:-1:2]
 
     return ' '.join(str(x) for x in runs)

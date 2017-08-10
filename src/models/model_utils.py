@@ -147,7 +147,7 @@ def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, log=
         # compute output
         output = model(input_var)
         if train_loader.dataset.weighted:
-            criterion.bce.weight = weight.view(-1)
+            criterion.bce.weight = weight.view(-1).cuda() if GPU_AVAIL else weight.view(-1)
         loss = criterion(output, target_var)
 
         # measure dice and record loss
@@ -186,7 +186,7 @@ def evaluate(model, data_loader, criterion):
         # compute output
         output = model(input_var)
         if data_loader.dataset.weighted:
-            criterion.bce.weight = weight.view(-1)
+            criterion.bce.weight = weight.view(-1).cuda() if GPU_AVAIL else weight.view(-1)
         loss = criterion(output, target_var)
 
         # measure dice and record loss

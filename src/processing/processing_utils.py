@@ -1,6 +1,7 @@
 # Script for postprocessing functions, like making a submission file etc.
 
 import numpy as np
+from collections import deque
 from PIL import Image
 from data.config import *
 
@@ -47,6 +48,42 @@ def upscale_test_img(pil_img, crop=False):
         im = np.array(im) // 255
 
     return (im)
+
+
+def compute_weight(mask, wc=1, wo=10, sigma=5):
+    """
+    Compute weights for all pixels
+    mask: a numpy array of pixels
+    Return a numpy weight array for each pixel in img_mask 
+    """
+    img_mask = mask.tolist()
+    moves = [(-1, 0), (1, 0), (0, 1), (0, -1)]
+    (w, h) = mask.shape
+    Q = deque()
+    weights = [[-1 for j in range(h)] for i in range(w)]
+
+    # finding pixels in border
+    for i in range(w):
+        for j in range(h):
+            is_border = False
+            for k in range(4):
+                x, y = i + moves[k][0], j + moves[k][1]
+                if 0 <= x < w and 0 <= y < h:
+                    is_border |= img_mask[i][j] != img_mask[x][y]
+            if is_border:
+                Q.append((i, j, 0))
+                weights[i][j] = wc + wo
+
+    # compute distance
+    while Q:
+        (i, j, d) = Q.popleft()
+        for k in range(4):
+            x, y = i + moves[k][0], j + moves[k][1]
+            if 0 <= x < w and 0<= y < h and weights[x][y] < 0:
+                weights[x][y] = wc + wo*math.exp(-((d + 1)/sigma)**2)
+                Q.append((x, y, d + 1))
+
+    return np.array(weights)
 
 
 def rle_encode(mask_image):

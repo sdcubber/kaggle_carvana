@@ -2,6 +2,26 @@
 # Run jobs on GPU machine
 # -------------------------- #
 
+# ---- helper functions ---- #
+
+# Function to copy most recent log file to the dropbox folder
+dropbox_log() {
+	cd ../logs
+	cp `ls -rtm1 | tail -1` /home/stijndc/Dropbox/Kaggle_carvana/logfiles/
+	cd -
+}
+
+# Function to copy most recent set of test set predictions to dropbox
+dropbox_predictions(){
+	cd ../predictions/test
+	cp `ls -rtm1 | tail -1` /home/stijndc/Dropbox/Kaggle_carvana/
+	cd -
+}
+
+# ---------------------#
+
+# ---- job script ---- #
+
 # activate python environment
 source activate pytorch
 
@@ -13,12 +33,18 @@ cd ../src
 # Variable order: message im_size architecture epochs
 
 MESSAGE='foo'
-python main.py $MESSAGE 128 UNet_128 30 -b 32 
 
-source deactivate
+python main.py $MESSAGE 512 UNet_128_512_50epochs 50 -b 4 
 
-# Copy log file to dropbox
-cd ../logs
-cp `ls -rtm1 | tail -1` /home/stijndc/Dropbox/Kaggle_carvana/logfiles/
+dropbox_log
+dropbox_predictions
+
+#python main.py $MESSAGE 512 UNet_128_512 30 -b 4 
+
+#dropbox_log
+#dropbox_predictions
+
 cd ../jobscripts
 
+sleep 30m # allow some time to upload files to dropbox
+shutdown now 

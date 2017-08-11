@@ -3,6 +3,7 @@ from torch.utils.data import Dataset
 from PIL import Image
 import processing.processing_utils as pu
 from data.config import *
+import processing.augmentation as pa
 
 
 class CarvanaDataset(Dataset):
@@ -11,6 +12,7 @@ class CarvanaDataset(Dataset):
     def __init__(self, im_dir,
                  ids_list=None,
                  mask_dir=None,
+                 common_transforms=None,
                  input_transforms=None,
                  mask_transforms=None,
                  rotation_ids=range(1, 17),
@@ -22,6 +24,7 @@ class CarvanaDataset(Dataset):
         ids_list (string array): list of all file ids (train or valid)
         mask_dir (string): Directory with the masks. None for test data.
         im_size = Image size. Scaling is done in PIL.
+        common_transforms: transforms for both input and output images
         input_transforms: transforms only on input images
         mask_transforms: transforms on input and output images
         rotation_ids (list [1-16]): containing types of rotations that we are interested
@@ -43,32 +46,41 @@ class CarvanaDataset(Dataset):
         if debug:
             self.im_list = self.im_list[:64]
 
+        self.common_transforms = common_transforms
         self.input_transforms = input_transforms
         self.mask_transforms = mask_transforms
 
     def __getitem__(self, idx):
+        mask, weight = 0, 0
         im_name = self.im_list[idx]
-        image = Image.open(os.path.join(self.im_dir, im_name + '.jpg'))
-        mask = 0
-        weight = 1
 
-        if self.input_transforms:
-            image = self.input_transforms(image)
+        image = pa.imread_cv2(os.path.join(self.im_dir, im_name + '.jpg'))
 
         if self.mask_dir:
-            mask = Image.open(os.path.join(self.mask_dir, im_name + '_mask.gif'))
+            mask = pa.imread_cv2(os.path.join(self.mask_dir, im_name + '_mask.gif'))
 
-            # applying transforms
+            # applying common transforms
+            if self.common_transforms:
+                for trans in self.common_transforms:
+                    image, mask = trans(image, mask)
+
+            # applying mask transforms
             if self.mask_transforms:
                 mask = self.mask_transforms(mask)
 
             if self.weighted:
-                weight = pu.compute_weight(np.array(mask).astype(np.uint8))
+                weight = pu.compute_weight(mask.astype(np.int32))
                 weight = weight.reshape(1, weight.shape[0], weight.shape[1])
-                weight = torch.from_numpy(weight.astype(np.float32))
+                weight = torch.from_numpy(weight.astype(np.float32)) # convert to tensor
 
-            mask = np.array(mask, np.float32).reshape(1, mask.size[0], mask.size[1])
-            mask = torch.from_numpy(mask)
+            # convert to tensor
+            mask = pa.image_to_tensor(mask)
+
+        # applying input transforms
+        if self.input_transforms:
+            image = self.input_transforms(image)
+        # convert to tensor
+        image = pa.image_to_tensor(image/255)
 
         return image, mask, weight, im_name
 

@@ -32,3 +32,5 @@ GPU_AVAIL = torch.cuda.is_available()
 
 #threshold used for prediction
 THRED = 0.5
+O_WIDTH = 1918
+O_HEIGH = 1280

@@ -69,7 +69,7 @@ class CarvanaDataset(Dataset):
                 mask = self.mask_transforms(mask)
 
             if self.weighted:
-                weight = pu.compute_weight(mask.astype(np.uint8))
+                weight = pu.compute_weight(mask.astype(np.int32))
                 weight = weight.reshape(1, weight.shape[0], weight.shape[1])
                 weight = torch.from_numpy(weight.astype(np.float32)) # convert to tensor
 
@@ -80,7 +80,7 @@ class CarvanaDataset(Dataset):
         if self.input_transforms:
             image = self.input_transforms(image)
         # convert to tensor
-        image = pa.image_to_tensor(image)
+        image = pa.image_to_tensor(image/255)
 
         return image, mask, weight, im_name
 

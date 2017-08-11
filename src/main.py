@@ -4,6 +4,7 @@ import time
 import models.models as mo
 import models.model_utils as mu
 import processing.processing_utils as pu
+import processing.augmentation as pa
 from data.data_utils import CarvanaDataset
 
 from torch.utils.data import DataLoader
@@ -38,13 +39,12 @@ def run_experiment(parser):
     rot_id = [args.rotation] if args.rotation else range(1, 17)
 
     # Data augmentation
+    common_trans = None
     input_trans = transforms.Compose([
-        transforms.Lambda(lambda x: x.resize((args.im_size, args.im_size), Image.ANTIALIAS)),
-        transforms.ToTensor()
+        transforms.Lambda(lambda x: pa.resize_cv2(x, args.im_size, args.im_size)),
     ])
-
     mask_trans = transforms.Compose([
-        transforms.Lambda(lambda x: x.resize((args.im_size, args.im_size), Image.ANTIALIAS)),
+        transforms.Lambda(lambda x: pa.resize_cv2(x, args.im_size, args.im_size)),
     ])
 
     # split data set for training and valid
@@ -55,6 +55,7 @@ def run_experiment(parser):
     dset_train = CarvanaDataset(im_dir=TRAIN_IMG_PATH,
                                 ids_list=train_ids,
                                 mask_dir=TRAIN_MASKS_PATH,
+                                common_transforms=common_trans,
                                 input_transforms=input_trans,
                                 mask_transforms=mask_trans,
                                 rotation_ids=rot_id,
@@ -64,6 +65,7 @@ def run_experiment(parser):
     dset_valid = CarvanaDataset(im_dir=TRAIN_IMG_PATH,
                                 ids_list=valid_ids,
                                 mask_dir=TRAIN_MASKS_PATH,
+                                common_transforms=common_trans,
                                 input_transforms=input_trans,
                                 mask_transforms=mask_trans,
                                 rotation_ids=rot_id,

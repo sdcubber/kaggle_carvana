@@ -44,7 +44,7 @@ class CarvanaDataset(Dataset):
         self.im_list = [item for item in self.im_list
                         if any(rot_id in item for rot_id in rotation_ids)]
         if debug:
-            self.im_list = self.im_list[:200]
+            self.im_list = self.im_list[:64]
 
         self.common_transforms = common_transforms
         self.input_transforms = input_transforms

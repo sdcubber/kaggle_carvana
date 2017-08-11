@@ -121,14 +121,17 @@ def run_experiment(parser):
     output_file = os.path.join(OUTPUT_SUB_PATH, 'test', '{}_{:.5f}_{:.5f}.gz'
                                .format(timestamp.strftime('%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice, best_loss))
 
-    # Store output probabilities
-    # see https://stackoverflow.com/questions/20928136/input-and-output-numpy-arrays-to-h5py
-    # for reading in the .h5 files
-    h5f = h5py.File('../models/probabilities_{}_{:.5f}_{:.5f}.h5'.format(timestamp.strftime('%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice,
-            best_loss), 'w')
-    h5f.create_dataset('TRAIN', data=output_train.data.cpu().numpy())
-    h5f.create_dataset('TEST', data=output_test.data.cpu().numpy())
-    h5f.close()
+    if args.store_probabilities:
+        log.write('Storing predicted probabilities...\n')
+        # Store output probabilities
+        # see https://stackoverflow.com/questions/20928136/input-and-output-numpy-arrays-to-h5py
+        # and https://stackoverflow.com/questions/22400652/compress-numpy-arrays-efficiently
+        # for reading in the .h5 files
+        h5f = h5py.File('../models/probabilities_{}_{:.5f}_{:.5f}.h5'.format(timestamp.strftime('%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice,
+                best_loss), 'w')
+        h5f.create_dataset('TRAIN', data=np.concatenate([output.data.cpu().numpy() for output in output_train], axis=0), compression='gzip', compression_opts=9)
+        h5f.create_dataset('TEST', data=np.concatenate([output.data.cpu().numpy() for output in output_test], axis=0), compression='gzip', compression_opts=9)
+        h5f.close()
 
     log.write('Writing encoded csv files for training data..\n')
     pu.make_prediction_file(output_file_train, TRAIN_MASKS_CSV, train_idx, rle_encoded_predictions_train)
@@ -157,6 +160,7 @@ def main():
     prs.add_argument('--resume', default='', type=str, metavar='PATH', help='Path to latest checkpoint (default: none)')
     prs.add_argument('-db', '--debug', action='store_true', help='Debug mode.')
     prs.add_argument('-we', '--weighted', action='store_true', help='Use weighted loss.')
+    prs.add_argument('-sp', '--store_probabilities', action='store_true', help='Store predicted probabilities')
     run_experiment(prs)
 
 

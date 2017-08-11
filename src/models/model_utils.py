@@ -5,6 +5,7 @@ import processing.processing_utils as pu
 import torchvision.transforms as transforms
 from torch.nn.modules.loss import _Loss, _WeightedLoss
 from PIL import Image
+import processing.augmentation as pa
 
 # --- Custom loss functions --- #
 class DiceLoss(_Loss):
@@ -48,15 +49,13 @@ def predict(model, test_loader, log=None):
         # compute output
         output = model(input_var)
         output_list.append(output)
-        # Go from numpy to list of PIL images
-        img_list = [np.squeeze(output.data[b].cpu().numpy()) for b in range(input.size(0))]
-        img_list = [Image.fromarray((item > THRED).astype(np.uint8)) for item in img_list]
 
-        # Upscale image to the original size
-        img_list = [item.resize((1918,1280), Image.ANTIALIAS) for item in img_list]
-
+        img_list = [output.data[b].cpu().numpy() for b in range(input.size(0))]
+        # resize the test images
+        img_list = [pa.resize_cv2(item, O_HEIGH, O_WIDTH) for item in img_list]
+        # convert to {0,1} prediction
+        img_list = [(item > THRED).astype(np.uint8) for item in img_list]
         # rle encode the predictions
-        # use the code from kaggle, until our own code is faster
         rle_encoded_predictions.extend([pu.rle_encode(np.array(item)) for item in img_list])
         test_idx.extend(id)
 

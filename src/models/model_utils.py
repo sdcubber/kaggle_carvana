@@ -50,11 +50,11 @@ def predict(model, test_loader, log=None):
         output = model(input_var)
         output_list.append(output.data.cpu().numpy()) # don't collect the list in gpu memory!
 
-        img_list = [output.data[b].cpu().numpy() for b in range(input.size(0))]
+        # Don't forget to squeeze!!
+        img_list = [np.squeeze(output.data[b].cpu().numpy()) for b in range(input.size(0))]
+
         # resize the test images
-        img_list = [pa.resize_cv2(item, O_HEIGH, O_WIDTH) for item in img_list]
-        # convert to {0,1} prediction
-        img_list = [(item > THRED).astype(np.uint8) for item in img_list]
+        img_list = [(pa.resize_cv2(item, O_HEIGH, O_WIDTH) > THRED).astype(np.uint8) for item in img_list]        # convert to {0,1} prediction
 
         # rle encode the predictions
         rle_encoded_predictions.extend([pu.rle_encode(np.array(item)) for item in img_list])

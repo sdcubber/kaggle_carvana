@@ -9,7 +9,7 @@ from data.data_utils import CarvanaDataset
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 from PIL import Image
-
+import h5py
 
 def run_experiment(parser):
     args = parser.parse_args()
@@ -110,15 +110,25 @@ def run_experiment(parser):
                              pin_memory=GPU_AVAIL)
 
     log.write('Predicting training data...\n')
-    train_idx, rle_encoded_predictions_train = mu.predict(model, train_full_loader, log)
+    train_idx, rle_encoded_predictions_train, output_train = mu.predict(model, train_full_loader, log)
     log.write('Predicting test data...\n')
-    test_idx, rle_encoded_predictions = mu.predict(model, test_loader, log)
+    test_idx, rle_encoded_predictions, output_test = mu.predict(model, test_loader, log)
 
+    # Store rle encoded outputs
     output_file_train = os.path.join(OUTPUT_SUB_PATH, 'train', 'TRAIN_{}_{:.5f}_{:.5f}.gz'
                                      .format(timestamp.strftime('%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice,
                                              best_loss))
     output_file = os.path.join(OUTPUT_SUB_PATH, 'test', '{}_{:.5f}_{:.5f}.gz'
                                .format(timestamp.strftime('%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice, best_loss))
+
+    # Store output probabilities
+    # see https://stackoverflow.com/questions/20928136/input-and-output-numpy-arrays-to-h5py
+    # for reading in the .h5 files
+    h5f = h5py.File('../models/probabilities_{}_{:.5f}_{:.5f}.h5'.format(timestamp.strftime('%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice,
+            best_loss), 'w')
+    h5f.create_dataset('TRAIN', data=output_train.data.cpu().numpy())
+    h5f.create_dataset('TEST', data=output_test.data.cpu().numpy())
+    h5f.close()
 
     log.write('Writing encoded csv files for training data..\n')
     pu.make_prediction_file(output_file_train, TRAIN_MASKS_CSV, train_idx, rle_encoded_predictions_train)

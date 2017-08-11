@@ -6,7 +6,6 @@ import torchvision.transforms as transforms
 from torch.nn.modules.loss import _Loss, _WeightedLoss
 from PIL import Image
 
-
 # --- Custom loss functions --- #
 class DiceLoss(_Loss):
     def __init__(self):
@@ -47,7 +46,7 @@ def predict(model, test_loader, log=None):
 
         # compute output
         output = model(input_var)
-
+        
         # Go from numpy to list of PIL images
         img_list = [np.squeeze(output.data[b].cpu().numpy()) for b in range(input.size(0))]
         img_list = [Image.fromarray((item > THRED).astype(np.uint8)) for item in img_list]
@@ -65,7 +64,7 @@ def predict(model, test_loader, log=None):
         if (batch_idx + 1) % print_iter == 0:
             log.write('Predicting {:>3.0f}%\n'.format(100*num_test/len(test_loader.dataset)))
 
-    return test_idx, rle_encoded_predictions
+    return test_idx, rle_encoded_predictions, output
 
 
 def train(train_loader, valid_loader, model, criterion, optimizer, args, log=None):

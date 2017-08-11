@@ -79,8 +79,8 @@ def compute_weight(mask, wc=1, wo=5, sigma=5):
         (i, j, d) = Q.popleft()
         for k in range(4):
             x, y = i + moves[k][0], j + moves[k][1]
-            if 0 <= x < w and 0<= y < h and weights[x][y] < 0:
-                weights[x][y] = wc + wo*math.exp(-((d + 1)/sigma)**2)
+            if 0 <= x < w and 0 <= y < h and weights[x][y] < 0:
+                weights[x][y] = wc + wo * math.exp(-((d + 1) / sigma) ** 2)
                 Q.append((x, y, d + 1))
 
     return np.array(weights)
@@ -137,27 +137,21 @@ def show_mask_image(car_code, angle_code):
     plt.show()
 
 
-def rle_to_string(codes):
-    """
-    Return string containing rle of
-    """
-    return ' '.join(str(x) for x in codes)
-
-
 def train_valid_split(csvfile, rotation_ids=range(1, 17), valid=0.1):
     """ Return a list of ids for training and a list for validation"""
-
     im_list = pd.read_csv(csvfile)['img']
-    # get all files with specific rotations in rotation_ids
-    rotation_ids = np.char.mod('_%02d', rotation_ids)
-    im_list = np.array([item for item in im_list
-                        if any(rot_id in item for rot_id in rotation_ids)])
+    im_list = [item.split('_')[0] for item in im_list]
+    im_list = np.array(np.unique(im_list))
 
-    # random shuffle the indices
     np.random.shuffle(im_list)
-    t_size = int(im_list.shape[0] * (1 - valid))
 
-    return im_list[:t_size], im_list[t_size:]
+    t_size = int(im_list.shape[0] * (1 - valid))
+    train, valid = im_list[:t_size], im_list[t_size:]
+
+    train = [item + '_{:02d}'.format(rot_id) for rot_id in rotation_ids for item in train]
+    valid = [item + '_{:02d}'.format(rot_id) for rot_id in rotation_ids for item in valid]
+
+    return np.array(train), np.array(valid)
 
 
 def update_spreadsheet(timestamp, im_size, arch, epochs, best_dice, best_loss, modelname, rotation):

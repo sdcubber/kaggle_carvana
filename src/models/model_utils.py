@@ -47,7 +47,7 @@ def predict(model, test_loader, log=None):
 
         # compute output
         output = model(input_var)
-        output_list.append(output)
+        output_list.append(output.data.cpu().numpy()) # don't collect the list in gpu memory!
         # Go from numpy to list of PIL images
         img_list = [np.squeeze(output.data[b].cpu().numpy()) for b in range(input.size(0))]
         img_list = [Image.fromarray((item > THRED).astype(np.uint8)) for item in img_list]

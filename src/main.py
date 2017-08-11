@@ -129,8 +129,8 @@ def run_experiment(parser):
         # for reading in the .h5 files
         h5f = h5py.File('../models/probabilities_{}_{:.5f}_{:.5f}.h5'.format(timestamp.strftime('%H_%M_%d_%m_%Y_{}'.format(args.arch)), best_dice,
                 best_loss), 'w')
-        h5f.create_dataset('TRAIN', data=np.concatenate([output.data.cpu().numpy() for output in output_train], axis=0), compression='gzip', compression_opts=9)
-        h5f.create_dataset('TEST', data=np.concatenate([output.data.cpu().numpy() for output in output_test], axis=0), compression='gzip', compression_opts=9)
+        h5f.create_dataset('TRAIN', data=np.concatenate([output_train], axis=0), compression='gzip', compression_opts=9)
+        h5f.create_dataset('TEST', data=np.concatenate([output_test], axis=0), compression='gzip', compression_opts=9)
         h5f.close()
 
     log.write('Writing encoded csv files for training data..\n')

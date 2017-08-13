@@ -140,10 +140,7 @@ def run_experiment(parser):
     log.write('Writing encoded csv files for test data...\n')
     pu.make_prediction_file(output_file, SAMPLE_SUB_CSV, test_idx, rle_encoded_predictions)
     log.write('Done!')
-
-
     # --------------------------------------------------------------------------------#
-
 
 def main():
     prs = argparse.ArgumentParser(description='Kaggle: Carvana car segmentation challenge')

@@ -112,9 +112,9 @@ def run_experiment(parser):
                              pin_memory=GPU_AVAIL)
 
     log.write('Predicting training data...\n')
-    train_idx, rle_encoded_predictions_train, output_train = mu.predict(model, train_full_loader, log)
+    train_idx, rle_encoded_predictions_train, output_train = mu.predict(model, train_full_loader, args, log)
     log.write('Predicting test data...\n')
-    test_idx, rle_encoded_predictions, output_test = mu.predict(model, test_loader, log)
+    test_idx, rle_encoded_predictions, output_test = mu.predict(model, test_loader, args, log)
 
     # Store rle encoded outputs
     output_file_train = os.path.join(OUTPUT_SUB_PATH, 'train', 'TRAIN_{}_{:.5f}_{:.5f}.gz'

@@ -16,7 +16,6 @@ def imread_cv2(image_path):
         image = cv2.imread(image_path)
     else:
         image = np.array(Image.open(image_path))
-        image = image.reshape(image.shape[0], image.shape[1], 1)
 
     return image
 

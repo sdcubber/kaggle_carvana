@@ -24,7 +24,6 @@ def run_experiment(parser):
     # define loss function (criterion) and optimizer
     criterion = mu.BCELoss2D()
     model = mo.UNet128(args.arch)
-    model = torch.load('../models/UNet_128_1024_best_weights.torch')
     optimizer = torch.optim.SGD(model.parameters(),
                                 lr=args.lr,
                                 momentum=args.momentum,

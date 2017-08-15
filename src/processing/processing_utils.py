@@ -50,7 +50,7 @@ def upscale_test_img(pil_img, crop=False):
     return (im)
 
 
-def compute_weight(mask, wc=1, wo=5, sigma=5):
+def compute_weight(mask, wc=1, wo=2, sigma=10):
     """
     Compute weights for all pixels
     mask: a numpy array of pixels

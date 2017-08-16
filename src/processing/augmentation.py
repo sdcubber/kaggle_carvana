@@ -57,7 +57,7 @@ def randomHorizontalShift(image, mask, max_shift=0.05, p=0.5):
     """Do random horizontal shift with max proportion shift and with probability p
     Elements that roll beyond the last position are re-introduced at the first."""
     max_shift_pixels = int(max_shift*image.shape[1])
-    shift = np.random.choice(range(max_shift_pixels))
+    shift = np.random.choice(np.arange(-max_shift_pixels, max_shift_pixels+1))
     if np.random.random() < p:
         image = np.roll(image, shift, axis=1)
         mask = np.roll(mask, shift, axis=1)
@@ -67,7 +67,7 @@ def randomVerticalShift(image, mask, max_shift=0.05, p=0.5):
     """Do random vertical shift with max proportion shift and probability p
     Elements that roll beyond the last position are re-introduced at the first."""
     max_shift_pixels = int(max_shift*image.shape[0])
-    shift = np.random.choice(range(max_shift_pixels))
+    shift = np.random.choice(np.arange(-max_shift_pixels, max_shift_pixels+1))
     if np.random.random() < p:
             image = np.roll(image, shift, axis=0)
             mask = np.roll(mask, shift, axis=0)
@@ -78,6 +78,18 @@ def randomInvert(image, mask, p=0.5):
     if np.random.random() < p:
         image = 255 - image
         mask = mask
+    return image, mask
+
+def randomBrightness(image, mask, p=0.5, max_value=75):
+    """With probability p, randomly increase or decrease brightness.
+    See https://stackoverflow.com/questions/37822375/python-opencv-increasing-image-brightness-without-overflowing-uint8-array"""
+    if np.random.random() < p:
+        value = np.random.choice(np.arange(-max_value, max_value))
+        print(value)
+        if value > 0:
+            image = np.where((255 - image) < value,255,image+value).astype(np.uint8)
+        else:
+            image = np.where(image < -value,0,image+value).astype(np.uint8)
     return image, mask
 
 def GaussianBlur(image, mask, kernel=(1, 1),sigma=1,  p=0.5):

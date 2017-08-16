@@ -61,8 +61,8 @@ class CarvanaDataset(Dataset):
 
             # applying common transforms
             if self.common_transforms:
-                for trans in self.common_transforms:
-                    image, mask = trans(image, mask)
+                for i,t in enumerate(self.common_transforms):
+                    image, mask = t(image, mask)
 
             # applying mask transforms
             if self.mask_transforms:

@@ -84,11 +84,23 @@ def randomBrightness(image, mask, p=0.5, max_value=75):
     See https://stackoverflow.com/questions/37822375/python-opencv-increasing-image-brightness-without-overflowing-uint8-array"""
     if np.random.random() < p:
         value = np.random.choice(np.arange(-max_value, max_value))
-        print(value)
         if value > 0:
             image = np.where((255 - image) < value,255,image+value).astype(np.uint8)
         else:
             image = np.where(image < -value,0,image+value).astype(np.uint8)
+    return image, mask
+
+def randomHue(image, mask, p=0.5, max_value=255):
+    """With probability p, randomly increase or decrease hue.
+    See https://stackoverflow.com/questions/32609098/how-to-fast-change-image-brightness-with-python-opencv"""
+
+    if np.random.random() < p:
+        value = np.random.choice(np.arange(-max_value, max_value))
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        hsv[:,:,0] = hsv[:,:,0] + value
+        hsv = np.clip(hsv, a_min=0, a_max=255).astype(np.uint8)
+        image = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+
     return image, mask
 
 def GaussianBlur(image, mask, kernel=(1, 1),sigma=1,  p=0.5):

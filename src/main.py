@@ -39,7 +39,13 @@ def run_experiment(parser):
     rot_id = [args.rotation] if args.rotation else range(1, 17)
 
     # Data augmentation
-    common_trans = None
+    common_trans = transforms.Compose([
+        transforms.Lambda(lambda (x,y): pa.randomBrightness(x,y, p=0.75)),
+        transforms.Lambda(lambda (x,y): pa.randomHue(x,y,p=0.25)),
+        transforms.Lambda(lambda (x,y): pa.randomHorizontalFlip(x,y, p=0.5)),
+        transforms.Lambda(lambda (x,y): pa.randomHorizontalShift(x,y, p=0.5)),
+        transforms.Lambda(lambda (x,y): pa.randomVerticalShift(x,y, p=0.5))
+    ])
     input_trans = transforms.Compose([
         transforms.Lambda(lambda x: pa.resize_cv2(x, args.im_size, args.im_size)),
     ])

@@ -79,10 +79,11 @@ def randomInvert(image, mask, p=0.5):
         mask = mask
     return image, mask
 
-def randomBrightness(image, mask, p=0.5, max_value=75):
+def randomBrightness(image, mask, p=0.5):
     """With probability p, randomly increase or decrease brightness.
     See https://stackoverflow.com/questions/37822375/python-opencv-increasing-image-brightness-without-overflowing-uint8-array"""
     if np.random.random() < p:
+        max_value = np.percentile(255-image, q=35) # avoid burning out white cars, so take image-specific maximum
         value = np.random.choice(np.arange(-max_value, max_value))
         if value > 0:
             image = np.where((255 - image) < value,255,image+value).astype(np.uint8)
@@ -90,7 +91,7 @@ def randomBrightness(image, mask, p=0.5, max_value=75):
             image = np.where(image < -value,0,image+value).astype(np.uint8)
     return image, mask
 
-def randomHue(image, mask, p=0.5, max_value=255):
+def randomHue(image, mask, p=0.5, max_value=155):
     """With probability p, randomly increase or decrease hue.
     See https://stackoverflow.com/questions/32609098/how-to-fast-change-image-brightness-with-python-opencv"""
 

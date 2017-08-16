@@ -27,7 +27,7 @@ class BCELoss2D(_WeightedLoss):
         return self.bce(input.view(-1), target.view(-1))
 
 
-def predict(model, test_loader, log=None):
+def predict(model, test_loader, args, log=None):
     """Make rle-encoded predictions on a set of data. Returns image ids and encoded predictions."""
 
     # switch to evaluate mode
@@ -48,7 +48,6 @@ def predict(model, test_loader, log=None):
 
         # compute output
         output = model(input_var)
-        output_list.append(output.data.cpu().numpy()) # don't collect the list in gpu memory!
 
         # Don't forget to squeeze!!
         img_list = [np.squeeze(output.data[b].cpu().numpy()) for b in range(input.size(0))]
@@ -64,6 +63,9 @@ def predict(model, test_loader, log=None):
         num_test += input.size(0)
         if (batch_idx + 1) % print_iter == 0:
             log.write('Predicting {:>3.0f}%\n'.format(100*num_test/len(test_loader.dataset)))
+
+        if args.store_probabilities:
+            output_list.append(output.data.cpu().numpy()) # don't collect the list in gpu memory!
 
     return test_idx, rle_encoded_predictions, output_list
 

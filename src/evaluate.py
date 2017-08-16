@@ -36,7 +36,7 @@ def evaluate(parser):
 
     log.write(str(args) + "\n")
 
-    filename = 'UNet_128_1024_best_weights'
+    filename = 'UNet_128_1024_best_weights_0.004352842413936742'
     model = torch.load('../models/{}.torch'.format(filename))
 
     if GPU_AVAIL:
@@ -92,7 +92,7 @@ def evaluate(parser):
     log.write('Writing encoded csv files for test data...\n')
     pu.make_prediction_file(output_file, SAMPLE_SUB_CSV, test_idx, rle_encoded_predictions)
     log.write('Done!')
-    
+
 if __name__ == '__main__':
     # random.seed(123456789) # Fix seed
     sys.exit(main())

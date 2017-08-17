@@ -43,9 +43,7 @@ def run_experiment(parser):
     # Data augmentation
     common_trans = [lambda x,y: pa.randomBrightness(x,y),
                     lambda x,y: pa.randomHue(x,y),
-                    lambda x,y: pa.randomHorizontalFlip(x,y),
-                    lambda x,y: pa.randomHorizontalShift(x,y),
-                    lambda x,y: pa.randomVerticalShift(x,y)]
+                    lambda x,y: pa.randomHorizontalFlip(x,y)]
 
     input_trans = transforms.Compose([
         transforms.Lambda(lambda x: pa.resize_cv2(x, args.im_size, args.im_size)),

@@ -81,7 +81,7 @@ def main():
         mask = pa.imread_cv2(os.path.join('../data/raw/test/', m))
         split = split_im(mask)
         for i, s in enumerate(split):
-            # for the images
+            # for the image s
             #cv2.imwrite(os.path.join('../data/raw/test_cropped/', m.split('.')[0] + '_{}.jpg'.format(i)),s)
             # for the masks
             im = Image.fromarray(np.squeeze(s)*255)

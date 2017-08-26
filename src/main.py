@@ -165,6 +165,7 @@ def main():
     prs.add_argument('-db', '--debug', action='store_true', help='Debug mode.')
     prs.add_argument('-we', '--weighted', action='store_true', help='Use weighted loss.')
     prs.add_argument('-sp', '--store_probabilities', action='store_true', help='Store predicted probabilities')
+    prs.add_argument('-ac', '--n_acc', type=int, default=1, help='Number of batches to accumulate gradients.')
     run_experiment(prs)
 
 

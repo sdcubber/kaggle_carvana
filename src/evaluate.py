@@ -36,7 +36,7 @@ def evaluate(parser):
 
     log.write(str(args) + "\n")
 
-    filename = 'UNet_128_1024_best_weights_0.004352842413936742'
+    filename = 'UNet_128_1024_best_weights_0.00392006117181154'
     model = torch.load('../models/{}.torch'.format(filename))
 
     if GPU_AVAIL:

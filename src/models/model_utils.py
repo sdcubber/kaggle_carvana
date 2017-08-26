@@ -80,7 +80,7 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
         adjust_learning_rate(optimizer, epoch, args.lr)
 
         # training the model
-        run_epoch(train_loader, model, criterion, optimizer, epoch, args.epochs, log)
+        run_epoch(train_loader, model, criterion, optimizer, epoch, args.epochs, args.n_acc,log)
 
         # validate the valid data
         valid_dice, valid_loss = evaluate(model, valid_loader, criterion)
@@ -129,7 +129,7 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
 
     return best_dice, best_loss
 
-def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, log=None):
+def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, n_acc, log=None):
     """Run one epoch of training."""
     # switch to train mode
     model.train()
@@ -158,9 +158,12 @@ def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, log=
         losses.update(loss.data[0], input.size(0))
 
         # Zero gradients, compute gradients and do SGD step
-        optimizer.zero_grad()
         loss.backward()
-        optimizer.step()
+
+        # Gradient accumulation: do update step only once each n_acc epochs
+        if batch_idx % n_acc == 0:
+            optimizer.step()
+            optimizer.zero_grad()
 
         if (batch_idx + 1) % print_iter == 0:
             log.write('Epoch [{:>2}/{:>2}] {:>3.0f}%'

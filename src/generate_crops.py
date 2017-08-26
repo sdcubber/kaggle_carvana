@@ -77,15 +77,15 @@ def main():
     im_list_train = os.listdir('../data/raw/train/')
     mask_list = os.listdir('../data/raw/train_masks/')
 
-    for m in tqdm(mask_list)
+    for m in tqdm(im_list_test):
         mask = pa.imread_cv2(os.path.join('../data/raw/test/', m))
         split = split_im(mask)
         for i, s in enumerate(split):
             # for the image s
-            #cv2.imwrite(os.path.join('../data/raw/test_cropped/', m.split('.')[0] + '_{}.jpg'.format(i)),s)
+            cv2.imwrite(os.path.join('../data/raw/test_cropped/', m.split('.')[0] + '_{}.jpg'.format(i)),s)
             # for the masks
-            im = Image.fromarray(np.squeeze(s)*255)
-            im.save(os.path.join('../data/raw/train_masks_cropped/', m.split('.')[0] + '_{}.gif'.format(i)))
+            #im = Image.fromarray(np.squeeze(s)*255)
+            #im.save(os.path.join('../data/raw/train_masks_cropped/', m.split('.')[0] + '_{}.gif'.format(i)))
 
 if __name__ == '__main__':
     # random.seed(123456789) # Fix seed

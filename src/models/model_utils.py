@@ -76,11 +76,11 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
     best_dice, best_loss = load_checkpoint(args, model, optimizer, log)
 
     plateau_counter = 0
+    lr_patience = 4 # patience for lr scheduling
+    early_stopping_patience = 6
 
     for epoch in range(args.start_epoch, args.epochs):
-        lr_patience = 4 # patience for lr scheduling
-        early_stopping_patience = 6
-        
+
         if plateau_counter == early_stopping_patience:
             print('Early stopping: patience reached.')
             break
@@ -109,7 +109,7 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
         else:
             plateau_counter=0
 
-        if plateau_counter == patience:
+        if plateau_counter == lr_patience:
             optimizer = adjust_lr_on_plateau(optimizer)
 
         if is_best: # Save only if it's the best model
@@ -221,7 +221,7 @@ def load_checkpoint(args, model, optimizer, log=None):
     """
 
     if args.resume and os.path.isfile(args.resume):
-        log.write("=> loading checkpoint '{}'\n".format(args.resume))
+        log.write("=> loading checkpoint '{}'\n".f64ormat(args.resume))
         checkpoint = torch.load(args.resume)
         args.start_epoch = checkpoint['epoch']
         args.arch = checkpoint['arch']
@@ -246,8 +246,9 @@ def adjust_learning_rate(optimizer, epoch, init_lr=0.01, value=0.5):
 
 def adjust_lr_on_plateau(optimizer):
     """Decrease learning rate by factor 10 if validation loss reaches a plateau"""
+    print('Validation loss reached plateau. Reducing learning rate...')
     for param_group in optimizer.param_groups:
-            param_group['lr'] = paramgroup['lr']/10
+            param_group['lr'] = param_group['lr']/10
     return optimizer
 
 def dice(im1, im2, empty_score=1.0):

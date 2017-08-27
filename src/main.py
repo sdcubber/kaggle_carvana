@@ -12,6 +12,7 @@ import torchvision.transforms as transforms
 from PIL import Image
 import h5py
 
+
 def run_experiment(parser):
     args = parser.parse_args()
     timestamp = datetime.now()
@@ -23,7 +24,7 @@ def run_experiment(parser):
 
     # define loss function (criterion) and optimizer
     criterion = mu.BCELoss2D()
-    model = mo.UNet128(args.arch)
+    model = mo.UNet128()
     # initialize model with pretrained weights
     #model = torch.load('../models/UNet_128_1024_best_weights_0.004352842413936742.torch')
     optimizer = torch.optim.SGD(model.parameters(),

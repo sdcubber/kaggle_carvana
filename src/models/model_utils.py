@@ -75,10 +75,15 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
     # load the last run
     best_dice, best_loss = load_checkpoint(args, model, optimizer, log)
 
-    for epoch in range(args.start_epoch, args.epochs):
-        # update learning rate
-        adjust_learning_rate(optimizer, epoch, args.lr)
+    plateau_counter = 0
 
+    for epoch in range(args.start_epoch, args.epochs):
+        lr_patience = 4 # patience for lr scheduling
+        early_stopping_patience = 6
+        
+        if plateau_counter == early_stopping_patience:
+            print('Early stopping: patience reached.')
+            break
         # training the model
         run_epoch(train_loader, model, criterion, optimizer, epoch, args.epochs, args.n_acc,log)
 
@@ -98,6 +103,14 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
                                    .format(model.modelName))
         best_weight_file = os.path.join(OUTPUT_WEIGHT_PATH, '{}_best_weights.torch'
                                     .format(model.modelName))
+
+        if not is_best:
+            plateau_counter+=1
+        else:
+            plateau_counter=0
+
+        if plateau_counter == patience:
+            optimizer = adjust_lr_on_plateau(optimizer)
 
         if is_best: # Save only if it's the best model
             log.write('Saving best model architecture...\n')
@@ -225,13 +238,17 @@ def load_checkpoint(args, model, optimizer, log=None):
 
     return best_dice, best_loss
 
-
 def adjust_learning_rate(optimizer, epoch, init_lr=0.01, value=0.5):
     """Sets the learning rate to the initial LR decayed by value every 20 epochs"""
     lr = init_lr * (value ** (epoch // 20))
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
+def adjust_lr_on_plateau(optimizer):
+    """Decrease learning rate by factor 10 if validation loss reaches a plateau"""
+    for param_group in optimizer.param_groups:
+            param_group['lr'] = paramgroup['lr']/10
+    return optimizer
 
 def dice(im1, im2, empty_score=1.0):
     """ Return dice accuracy """

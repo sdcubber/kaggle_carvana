@@ -27,10 +27,13 @@ def run_experiment(parser):
     model = mo.UNet128()
     # initialize model with pretrained weights
     #model = torch.load('../models/UNet_128_1024_best_weights_0.004352842413936742.torch')
-    optimizer = torch.optim.SGD(model.parameters(),
-                                lr=args.lr,
-                                momentum=args.momentum,
-                                weight_decay=args.weight_decay)
+    #optimizer = torch.optim.SGD(model.parameters(),
+    #                            lr=args.lr,
+    #                            momentum=args.momentum,
+    #                            weight_decay=args.weight_decay)
+    optimizer = torch.optim.Adam(model.parameters(),
+                                lr=args.lr)
+
     if GPU_AVAIL:
         model = model.cuda()
         criterion = criterion.cuda()

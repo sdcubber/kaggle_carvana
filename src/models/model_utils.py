@@ -76,13 +76,13 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
     best_dice, best_loss = load_checkpoint(args, model, optimizer, log)
 
     plateau_counter = 0
-    lr_patience = 4 # patience for lr scheduling
-    early_stopping_patience = 6
+    lr_patience = 10 # patience for lr scheduling
+    early_stopping_patience = 6 # patience for early stopping
 
     for epoch in range(args.start_epoch, args.epochs):
 
-        if plateau_counter == early_stopping_patience:
-            print('Early stopping: patience reached.')
+        if plateau_counter > early_stopping_patience:
+            log.write('Early stopping: patience reached.')
             break
         # training the model
         run_epoch(train_loader, model, criterion, optimizer, epoch, args.epochs, args.n_acc,log)
@@ -109,7 +109,8 @@ def train(train_loader, valid_loader, model, criterion, optimizer, args, log=Non
         else:
             plateau_counter=0
 
-        if plateau_counter == lr_patience:
+        if plateau_counter > lr_patience:
+            log.write('Validation loss reached plateau. Reducing learning rate...')
             optimizer = adjust_lr_on_plateau(optimizer)
 
         if is_best: # Save only if it's the best model
@@ -246,7 +247,6 @@ def adjust_learning_rate(optimizer, epoch, init_lr=0.01, value=0.5):
 
 def adjust_lr_on_plateau(optimizer):
     """Decrease learning rate by factor 10 if validation loss reaches a plateau"""
-    print('Validation loss reached plateau. Reducing learning rate...')
     for param_group in optimizer.param_groups:
             param_group['lr'] = param_group['lr']/10
     return optimizer

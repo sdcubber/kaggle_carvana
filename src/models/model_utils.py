@@ -164,21 +164,37 @@ def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, n_ac
         output = model(input_var)
         if train_loader.dataset.weighted:
             criterion.bce.weight = weight.view(-1).cuda() if GPU_AVAIL else weight.view(-1)
-        loss = criterion(output, target_var)
-
+            
+        #loss = criterion(output, target_var)
         # measure dice and record loss
-        score = get_dice_score(output.data.cpu().numpy(), target.cpu().numpy(), THRED)
-        dices.update(score, input.size(0))
-        losses.update(loss.data[0], input.size(0))
+        #score = get_dice_score(output.data.cpu().numpy(), target.cpu().numpy(), THRED)
+        #dices.update(score, input.size(0))
+        #losses.update(loss.data[0], input.size(0))
 
         # Zero gradients, compute gradients and do SGD step
-        loss.backward()
-
+        #loss.backward()
+        
+        optimizer.zero_grad()
+        
+        mini_weight = 0
+        mini_dice = 0
+        for i in range(input.size(0)):
+            loss = criterion(output[i], target_var[i])/input.size(0)
+            loss.backward()
+            mini_weight += loss.data[0]
+            mini_dice += get_dice_score(output[i].data.cpu().numpy(), target[i].cpu().numpy(), THRED)        
+        
+        optimizer.step()
+        losses.update(mini_weight, input.size(0))
+        dices.update(mini_dice, input.size(0))
+        
+        """
         # Gradient accumulation: do update step only once each n_acc epochs
         if batch_idx % n_acc == 0:
             optimizer.step()
             optimizer.zero_grad()
-
+        """
+        
         if (batch_idx + 1) % print_iter == 0:
             log.write('Epoch [{:>2}/{:>2}] {:>3.0f}%'
                       '\ttrain_loss={:.6f}, train_dice={:.6f}\n'.format(

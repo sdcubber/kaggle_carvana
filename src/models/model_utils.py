@@ -180,7 +180,7 @@ def run_epoch(train_loader, model, criterion, optimizer, epoch, num_epochs, n_ac
         mini_dice = 0
 
         for i in range(input.size(0)):
-            loss = torch.addcmul(criterion(output[i], target_var[i]), 1/input.size(0))
+            loss = torch.addcmul(criterion(output[i], target_var[i]), Variable(torch.FloatTensor(1/input.size(0)).cuda())
             loss.backward()
             mini_weight += loss.data[0]
             mini_dice += get_dice_score(output[i].data.cpu().numpy(), target[i].cpu().numpy(), THRED)
